@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Event Parser</title>
+
+	<script src="https://code.jquery.com/jquery-2.2.2.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+		  integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+	<script type="text/javascript" src="../event-parser.js"></script>
+</head>
+<body>
+<script>
+	$(function ($) {
+		$.get('test-cases.txt', function (data) {
+			var tr = "",
+				ep = new EventParser(),
+				table = $('#table'),
+			    event = null;
+
+			$.each(data.split('\r\n'), function (i, o) {
+				if (o !== "") {
+					event = ep.parse(o).getEvent();
+					// ep.getEvent()
+
+
+					var row = $("<tr/>");
+					row.append("<td>" + o + "</td>");
+
+					row.append("<td>" + event.parsedText + "</td>");
+					row.append("<td>" + ((event.isRecurrent) ? "recurrent" : "") + "</td>");
+					row.append("<td>" + event.recurrenceText + "</td>");
+
+					/*
+					var tokens = $("<div></div>");
+					$.each(ep.event.tokens, function(index, item) { $("<div></div>").text(item).appendTo(tokens); });
+					row.append($('<td></td>').append(tokens));
+					*/
+
+					table.append(row);
+
+
+				}
+			});
+		});
+	});
+</script>
+<div class="container-fluid">
+	<table id="table" class="table"></table>
+</div>
+</body>
+</html>
