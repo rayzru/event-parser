@@ -224,10 +224,8 @@
 				re =  new RegExp(this.sets.weekday.join('|'), 'i')
 				if (match = re.exec(this.event.recurrenceText)) {
 					this.event.frequency = 'weekly';
-
+					console.log(match);
 					this.event.recurrentAttr.push({day: this.sets.weekday.indexOf(match[0])})
-					
-					
 
 				}
 
