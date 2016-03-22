@@ -32,11 +32,10 @@
 					row.append("<td>" + ((event.isRecurrent) ? "recurrent" : "") + "</td>");
 					row.append("<td>" + event.recurrenceText + "</td>");
 
-					/*
-					var tokens = $("<div></div>");
-					$.each(ep.event.tokens, function(index, item) { $("<div></div>").text(item).appendTo(tokens); });
-					row.append($('<td></td>').append(tokens));
-					*/
+
+					var dates = $("<div></div>");
+					$.each(ep.event.parsedDates, function(index, item) { $("<div></div>").text(item.match).appendTo(dates); });
+					row.append($('<td></td>').append(dates));
 
 					table.append(row);
 

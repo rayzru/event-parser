@@ -1,12 +1,22 @@
 /*
  * Event Parser
- * by Andrew Rumm
- *
- *
+ * @author Andrew "RayZ" Rumm
+ * @version 0.1
  *
  * */
-(function () {
 
+
+
+/*
+ * The way it works:
+ * 1) convert all known shortens on to full word representations: dec->december, nov->november
+ * 2) convert all times into 24hour-format
+ * 3) parse and remove recurrent parts from source string for futurer parses.
+ * 4)
+ *
+ * */
+
+(function () {
 
 	// constructor
 	function EventParser(config) {
@@ -35,6 +45,8 @@
 			sourceText: "",
 			parsedText: "",
 			recurrenceText: "",
+			parsedDates: [],
+			parsedTimes: [],
 
 			title: "",
 			startDate: null,
@@ -113,16 +125,9 @@
 			//recurrenceWeekdays: /(((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?\s?(?:,|and|&)?\s?){2,})/gi,
 			//recurrenceWords: /\b(each|every|\d+\s?times|weekdays|(year|month|week|dai|hour)ly|weekends|ann(?:iversary)?|(monday|tuesday|wednesday|thursday|friday|saturday|sunday)s)\b/i,
 
-			// todo - add dates masks
-			/*recurrenceExpression: new RegExp(
-			 '((((every|each)?(?:\s)?(first|next|last|other)?)(?:\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|' +
-			 '((every|each)\s+?(?:other|last|first|next)?\s?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)|(weekday|weekend|week|month|day|year)))|' +
-			 '((sunday|monday|tuesday|wednesday|thursday|friday|saturday)s|' +
-			 '(dai|week|month|year)ly|weekends|weekdays))'
-			 , 'gi'),
-			 */
-
-			recurrenceExpression: /((((every|each)?(?:\s)?(first|next|last|other)?)(?:\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|((every|each)\s+?(?:other|last|first|next)?\s?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)|(weekday|weekend|week|month|day|year)))|((sunday|monday|tuesday|wednesday|thursday|friday|saturday)s|(dai|week|month|year)ly|weekends|weekdays))/gi,
+			// todo: add dates masks
+			// todo: add not listed atricules like on, at for ewxclusion
+			recurrenceExpression: /(((?:at|on)?((every|each)?(?:\s)?(first|next|last|other)?)(?:\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|((every|each)\s+?(?:other|last|first|next)?\s?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)|(weekday|weekend|week|month|day|year)))|((sunday|monday|tuesday|wednesday|thursday|friday|saturday)s|(dai|week|month|year)ly|weekends|weekdays))/gi,
 
 			/*recurrenceTimes:
 			 new RegExp(
@@ -133,14 +138,36 @@
 			// dates detectors
 			dates: {
 				// june 12, june 12th, june 12th 2001, "june 12th, of 2001"
-				mdyStrings: /(?:(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:(?:\s?,)?\s?of)?\s?(\d{1,2}(?:\s)?(?:|th|st|nd|rd)?)\b)(?:(?:\s?,)?(?:\s?of\s?)?(?:\s)?(20\d{2}|\d{2}[6-9]\d+))?)/ig,
+				// todo: add THE, AT, ON in front of detection block
+				mdyStrings: /(?:(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:(?:\s?,)?\s?of)?\s?(\d{1,2}(?:\s)?(?:|th|st|nd|rd)?)\b)(?:(?:\s?,)?(?:\s?of\s?)?(?:\s)?(20\d{2}|\d{2}[6-9]\d+))?)/gi,
 
 				//12 july, 12th of july, 12th of july of 2012
-				dmyStrings: /(?:(\d{1,2}(?:\s)?(?:|th|st|nd|rd)?)\b(?:\sof\s)?\s?(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:\s?,)?(?:\s?of\s?)?(20\d{2}|\d{2}[6-9]\d+))?)/ig,
+				// todo: add THE, AT, ON in front of detection block
+				dmyStrings: /(?:(\d{1,2}(?:\s)?(?:|th|st|nd|rd)?)\b(?:\sof\s)?\s?(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:\s?,)?(?:\s?of\s?)?(20\d{2}|\d{2}[6-9]\d+))?)/gi,
+
+				// relative closest dates aliases
+				// on friday, on other friday, at monday, at next monday, tommorow, today
+				relative: /((?:(?:on|at)?(?:\s)?)(?:(?:(next|this|last|after|other)?(?:\s)?)(?:(today|tomorrow)|(month|week|year)|(sunday|monday|tuesday|wednesday|thursday|friday|saturday)))(?:(?:\s)(morning|evening|night))?)/ig,
+
+				// date ranges
+				// from - to, in between
+				ranges: /s/ig
+
+			},
+
+			// todo: add AT, ON in front of detection block
+			times: {
+				singleInstances: /(\d{1,2})(?:\:)(\d{2})(?:\s)?(am|pm)?|(\d{1,2})(?:\s)?(am|pm)/gi,
+				rangeWithHyphen: /s/i,
+				rangeWithFromTo: /s/i,
 			},
 
 			// Nicers
 			nicers: [
+
+
+				[/(\d{4})(?:-|.)(\d{2})(?:-|.)(\d{2})/ig, "$2/$3/$1"],
+
 				[/(w(\.|\/))/i, 'with'],
 
 				[/[^0-9a-z]\s?(@)\s?/i, ' at '],
@@ -149,6 +176,10 @@
 				//[/pm\b/ig, 'PM'],
 
 				[/(\btom(?:orrow)?\b)/i, 'tomorrow'],
+
+				//aliases
+				[/\b(noon)\b/i, '12:00'],
+				[/\b(midnight)\b/i, '24:00'], // depends on needs?
 
 				// weekdays
 				[/(\bmon(?:day)?\b)/i, 'monday'],
@@ -188,35 +219,28 @@
 			return (this.now) ? new Date(this.now.getTime()) : new Date();
 		},
 
-		formatCurago: function () {
+		// curago object wrapper
+		getCurago: function () {
 			return {}
 		},
 
 		// apply new settings into existing configuration
 		apply: function (settings) {
-			this.settings = $.extend({}, this.settings, settings);
+			this.settings = extend({}, this.settings, settings);
 		},
 
+		formatStrDate: function (date, month, year) {
+			return;
+		},
 
 		cleanup: function () {
+			var formattedString;
 			this.event.parsedText = this.event.sourceText;
 
 			// Complete uncompleted, shortened words, parts and abbrreveations.
 			for (var i = 0; i < this.patterns.nicers.length; i++) {
 				this.event.parsedText = this.event.parsedText.replace(this.patterns.nicers[i][0], this.patterns.nicers[i][1]);
 			}
-
-			// format dates for parsing
-			// M D Y
-			while (match = this.patterns.dates.mdyStrings.exec(this.event.parsedText))  {
-				//this.event.parsedText = this.event.parsedText.replace(this.patterns.dates.mdyStrings, );
-				console.log(match);
-
-
-			}
-
-			// format dates for parsing
-			// M D Y
 
 		},
 
@@ -251,7 +275,6 @@
 				re = new RegExp(this.sets.weekday.join('|'), 'ig')
 				while (match = re.exec(this.event.recurrenceText)) {
 					this.event.frequency = 'weekly';
-					//console.log(match);
 					this.event.recurrentAttr.push({day: this.sets.weekday.indexOf(match[0])})
 				}
 
@@ -268,6 +291,7 @@
 		},
 
 		parse: function (source) {
+			var match, matches;
 
 			if (typeof source === "string") this.setText(source);
 
@@ -276,8 +300,80 @@
 			} else {
 
 			}
+			this.event.parsedDates = [];
 
-			this.event.tokens = this.event.parsedText.split(this.patterns.rangeSplitters);
+			// store preformatted sting to store date index positions
+			var preConvertedString = this.event.parsedText;
+
+			// parse and format dates
+			// M D Y
+
+			while (matches = this.patterns.dates.mdyStrings.exec(this.event.parsedText)) {
+				//console.log(this.patterns.dates.mdyStrings.lastIndex);
+				match = matches.filter(filterUndefined);
+				console.dir(match);
+
+				this.event.parsedDates.push({
+					index: matches.index,
+					match: match[0]}
+				);
+
+				// matched only month and date
+				// changing to MM/DD || MM/DD/YYYY
+				formattedString = (this.sets.month.indexOf(match[1]) + 1) + '/' + parseInt(match[2]) + ((match.length == 4) ? '/' + match[3] : "");
+				this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
+			}
+
+			// D M Y
+			while (matches = this.patterns.dates.dmyStrings.exec(this.event.parsedText)) {
+
+				match = matches.filter(filterUndefined);
+
+				this.event.parsedDates.push({index: preConvertedString.indexOf(match[0]), match: match[0]});
+
+				if (match.length >= 4) {
+
+					// changing to MM/DD || MM/DD/YYYY
+					formattedString = (this.sets.month.indexOf(match[2]) + 1) + '/' + parseInt(match[1]) + ((match.length == 4) ? '/' + match[3] : "");
+
+					this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
+				}
+			}
+
+			// parse and format times
+
+			while (matches = this.patterns.times.singleInstances.exec(this.event.parsedText)) {
+				//if (this.patterns.dates.singleInstances.lastIndex) console.log(this.patterns.dates.singleInstances.lastIndex);
+				var hasMeridian = false,
+					meridian,
+					hours,
+					mins;
+
+					match = matches.filter(filterUndefined);
+				if (match.length >= 3) {
+					if (hasMeridian = (match[match.length - 1] === 'am' || match[match.length - 1] === 'pm')) {
+						meridian = match[match.length - 1];
+
+						hours = (meridian == 'am' && parseInt(match[1]) == 12) ? 0 : (meridian == 'pm' && parseInt(match[1]) < 12) ? parseInt(match[1])+12 : parseInt(match[1]);
+						mins = (match.length == 3) ? 0 : parseInt(match[2]);
+					} else {
+						hours = parseInt(match[1]);
+						mins = parseInt(match[2]);
+					}
+
+					formattedString = pad(hours, 2) + ':' + pad(mins, 2);
+					this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
+
+					this.event.parsedTimes.push({index: matches.index, match: match[0]});
+				}
+
+				//parse relatives
+
+
+			}
+
+
+			//this.event.tokens = this.event.parsedText.split(this.patterns.rangeSplitters);
 			return this;
 		},
 
@@ -290,7 +386,6 @@
 			while ((match = this.patterns.recurrenceExpression.exec(this.event.parsedText)) != null) {
 				this.event.isRecurrent = true;
 				this.event.recurrenceText = match[0];
-				//console.log(this.event.parsedText, '::',this.event.recurrenceText);
 				this.event.parsedText = this.event.parsedText.replace(this.event.recurrenceText, '');
 			}
 
@@ -315,4 +410,15 @@ function extend() {
 			if (arguments[i].hasOwnProperty(key))
 				arguments[0][key] = arguments[i][key];
 	return arguments[0];
+}
+
+function pad(num, size) {
+	size = size || 2;
+	var s = num + "";
+	while (s.length < size) s = "0" + s;
+	return s;
+}
+
+function filterUndefined(el) {
+	return el != undefined;
 }

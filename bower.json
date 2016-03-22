@@ -1,0 +1,28 @@
+{
+  "name": "Event Parser",
+  "description": "Natural-language event parser for Javascript.",
+  "main": "event-parser.js",
+  "authors": [
+    "Andrew RayZ Rumm"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "date",
+    "parse",
+    "nlp",
+    "javascript"
+  ],
+  "homepage": "https://github.com/rayzru/event-parser",
+  "moduleType": [
+    "amd",
+    "es6",
+    "globals"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
