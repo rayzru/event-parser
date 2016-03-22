@@ -90,7 +90,8 @@
 			month: ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'],
 			day: {
 				prefix: ['twenty', 'thirty'],
-				suffix: ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'nineth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth']
+				suffix: ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'nineth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'],
+				single: ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
 			},
 			holidays: [
 				[/thanksgiving/gi, 'every 4th thuesday of november'], 	// USA, but not Canada
@@ -102,34 +103,41 @@
 			]
 		};
 
-		
-		var weekdays = '('  + this.sets.weekday.join('|') + ')'; 
-		
+
+		var weekdays = '(' + this.sets.weekday.join('|') + ')';
+
 		this.patterns = {
 
 			rangeSplitters: /(\bto\b|\-|\b(?:un)?till?\b|\bthrough\b|\bthru\b|\band\b|\bends?\b)/ig,
-
 			//weekdays: new RegExp(this.sets.weekday.join('|'), 'i'),
-
-			//recurrenceWords: /\b(each|every|\d+\s?times|weekdays|(year|month|week|dai|hour)ly|weekends|ann(?:iversary)?|(monday|tuesday|wednesday|thursday|friday|saturday|sunday)s)\b/i,
-			recurrenceExpression:
-				new RegExp(
-					'((((every|each)?(?:\s)?(first|next|last|other)?)(?:\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|' +
-					'((every|each)\s+?(?:other|last|first|next)?\s?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)|(weekday|weekend|week|month|day|year)))|' +
-					'((sunday|monday|tuesday|wednesday|thursday|friday|saturday)s|' +
-					'(dai|week|month|year)ly|weekends|weekdays)'
-					,'gi'),
 			//recurrenceWeekdays: /(((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?\s?(?:,|and|&)?\s?){2,})/gi,
+			//recurrenceWords: /\b(each|every|\d+\s?times|weekdays|(year|month|week|dai|hour)ly|weekends|ann(?:iversary)?|(monday|tuesday|wednesday|thursday|friday|saturday|sunday)s)\b/i,
 
-			// dates parsers
-			dates: [
-				// june 12, june 12th, june 12th 2001
-				/((january|february|march|april|may|june|july|august|september|october|november|december)(\s?(?:,)?(?:\sof\s)?\s?(\d+)\s?(?:th|st|nd|rd)?)(\s?(?:,)?(?:\sof\s)?(20\d{2}|\d{2}[6-9]\d+))?)/ig,
+			// todo - add dates masks
+			/*recurrenceExpression: new RegExp(
+			 '((((every|each)?(?:\s)?(first|next|last|other)?)(?:\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|' +
+			 '((every|each)\s+?(?:other|last|first|next)?\s?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)|(weekday|weekend|week|month|day|year)))|' +
+			 '((sunday|monday|tuesday|wednesday|thursday|friday|saturday)s|' +
+			 '(dai|week|month|year)ly|weekends|weekdays))'
+			 , 'gi'),
+			 */
+
+			recurrenceExpression: /((((every|each)?(?:\s)?(first|next|last|other)?)(?:\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|((every|each)\s+?(?:other|last|first|next)?\s?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)|(weekday|weekend|week|month|day|year)))|((sunday|monday|tuesday|wednesday|thursday|friday|saturday)s|(dai|week|month|year)ly|weekends|weekdays))/gi,
+
+			/*recurrenceTimes:
+			 new RegExp(
+
+			 ),*/
+
+
+			// dates detectors
+			dates: {
+				// june 12, june 12th, june 12th 2001, "june 12th, of 2001"
+				mdyStrings: /(?:(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:(?:\s?,)?\s?of)?\s?(\d{1,2}(?:\s)?(?:|th|st|nd|rd)?)\b)(?:(?:\s?,)?(?:\s?of\s?)?(?:\s)?(20\d{2}|\d{2}[6-9]\d+))?)/ig,
 
 				//12 july, 12th of july, 12th of july of 2012
-				/((\d+)(?:th|nd|rd)?(?:\sof\s)?\s?(january|february|march|april|may|june|july|august|september|october|november|december)(\s?(?:,)?(?:\sof\s)?(20\d{2}|\d{2}[6-9]\d+))?)/i,
-
-			],
+				dmyStrings: /(?:(\d{1,2}(?:\s)?(?:|th|st|nd|rd)?)\b(?:\sof\s)?\s?(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:\s?,)?(?:\s?of\s?)?(20\d{2}|\d{2}[6-9]\d+))?)/ig,
+			},
 
 			// Nicers
 			nicers: [
@@ -141,11 +149,6 @@
 				//[/pm\b/ig, 'PM'],
 
 				[/(\btom(?:orrow)?\b)/i, 'tomorrow'],
-
-				// numbers
-				[/(first|one|1st)/i, 1],
-				[/(second|two|2nd)/i, 2],
-				[/(third|three|3rd)/i, 3],
 
 				// weekdays
 				[/(\bmon(?:day)?\b)/i, 'monday'],
@@ -181,7 +184,7 @@
 
 	EventParser.prototype = {
 
-		getNow: function() {
+		getNow: function () {
 			return (this.now) ? new Date(this.now.getTime()) : new Date();
 		},
 
@@ -194,12 +197,26 @@
 			this.settings = $.extend({}, this.settings, settings);
 		},
 
-		// Complete uncompleted, shortened words, parts and abbrreveations.
+
 		cleanup: function () {
 			this.event.parsedText = this.event.sourceText;
+
+			// Complete uncompleted, shortened words, parts and abbrreveations.
 			for (var i = 0; i < this.patterns.nicers.length; i++) {
 				this.event.parsedText = this.event.parsedText.replace(this.patterns.nicers[i][0], this.patterns.nicers[i][1]);
 			}
+
+			// format dates for parsing
+			// M D Y
+			while (match = this.patterns.dates.mdyStrings.exec(this.event.parsedText))  {
+				//this.event.parsedText = this.event.parsedText.replace(this.patterns.dates.mdyStrings, );
+				console.log(match);
+
+
+			}
+
+			// format dates for parsing
+			// M D Y
 
 		},
 
@@ -210,6 +227,10 @@
 			return this;
 		},
 
+		str2num: function (string) {
+
+		},
+
 		getEvent: function () {
 			return this.event;
 		},
@@ -218,28 +239,26 @@
 			return this.event.sourceText;
 		},
 
-		parseRecurrent: function() {
+		parseRecurrent: function () {
 			var match, re;
 			if (match = /(every|each)/i.exec(this.event.recurrenceText)) {
-				
+
 				// if every then untill forever
 				this.event.until = "";
 				this.event.recurrenceText = this.event.recurrenceText.replace(match[0], '');
 
 				// weekdays
-				re =  new RegExp(this.sets.weekday.join('|'), 'ig')
-				while(match = re.exec(this.event.recurrenceText)) {
+				re = new RegExp(this.sets.weekday.join('|'), 'ig')
+				while (match = re.exec(this.event.recurrenceText)) {
 					this.event.frequency = 'weekly';
-					console.log(match);
+					//console.log(match);
 					this.event.recurrentAttr.push({day: this.sets.weekday.indexOf(match[0])})
 				}
 
 			} else {
 
 
-
 			}
-
 
 
 		},
