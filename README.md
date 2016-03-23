@@ -1,10 +1,15 @@
 Event Parser
 ========
-Based on [Sherlock by Neil Gupta](https://github.com/neilgupta/Sherlock/)
 
 Рarses events written in plain English, and returns an object defining a basic event.
 
 ###Features
+* detects various dates
+* detects relative dates
+* support multiple formats
+* can detect recurrency
+* suggests event title, places and involved names
+
 
 ###Examples
 

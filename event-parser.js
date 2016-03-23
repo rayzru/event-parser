@@ -106,12 +106,17 @@
 			},
 			holidays: [
 				[/thanksgiving/gi, 'every 4th thuesday of november'], 	// USA, but not Canada
-				[/christmas|xmas|x-mas/gi, '25/12'], 					// USA?
-				[/new\s?year(:?\'s)?/gi, '1/1'],
+				[/christmas|xmas|x-mas/gi, '12/25'], 					// USA?
+				[/new\s?year(:?\'s)?(\seve)?/gi, '12/31 at 23:00'],
 				[/new\s?year(:?\'s)?/gi, '1/1'],
 				[/april\sfools/gi, '4/1'],
-				[/halloween/gi, '30/10']
-			]
+				[/halloween/gi, '10/30']
+			],
+			range:  {
+				splitter: ['to', '-', '(?:un)?till?', 'through', 'thru', 'and', 'ends'],
+				prefix: ['from', 'start(?:ing)?', 'on', 'at']
+			},
+			timeRelatives: ['afternoon', 'night', 'evening', 'morning']
 		};
 
 
@@ -148,20 +153,31 @@
 				dmyStrings: /(?:(\d{1,2}(?:\s)?(?:|th|st|nd|rd)?)\b(?:\sof\s)?\s?(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:\s?,)?(?:\s?of\s?)?(20\d{2}|\d{2}[6-9]\d+))?)/gi,
 
 				// relative closest dates aliases
-				// on friday, on other friday, at monday, at next monday, tommorow, today
-				relative: /((?:(?:on|at)?(?:\s)?)(?:(?:(next|this|last|after|other)?(?:\s)?)(?:(today|tomorrow)|(month|week|year)|(sunday|monday|tuesday|wednesday|thursday|friday|saturday)))(?:(?:\s)(morning|evening|night))?)/ig,
+				// on friday, on other friday, at monday, at next monday, tommorow, today, at 2nd tuesday
+				relative: {
 
-				// date ranges
-				// from - to, in between
-				ranges: /s/ig
+					// todo: there is a problem, capturing single relatives with 1 space before.
+					common: /(?:(?:on|at|to)\s)?(?:(next|this|last|after|other|\d(?:st|nd|rd|th)?)\s)?(today|tomorrow|month|week|year|sunday|monday|tuesday|wednesday|thursday|friday|saturday)/ig,
+
+					// not common usages
+					dayAfterTomorrow: /(\bday\safter\stomorrow\b)/ig,
+					inNDays: /\bin\s(\d+)days?\b/ig
+				},
+			// date ranges
+			// from - to, in between
+			ranges: /s/ig
 
 			},
 
 			// todo: add AT, ON in front of detection block
 			times: {
 				singleInstances: /(?:at|on)?(\d{1,2})(?:\:)(\d{2})(?:\s)?(am|pm)?|(\d{1,2})(?:\s)?(am|pm)/gi,
-				rangeWithHyphen: /((?:from\s)?(?:\d{1,2})(?:\:)(\d{2}))\s?(?:\-|to|(?:un)?till?)\s?((\d{1,2})(?:\:)(\d{2}))/i,
-				rangeWithFromTo: /\s/i,
+				fullRanges: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\s)?(?:\d{1,2})(?:\:)(\d{2}))\s?(?:' + this.sets.range.splitter.join('|') + ')\s?((\d{1,2})(?:\:)(\d{2}))', 'gi'),
+				partialRanges: [
+					// todo: !!! finish this
+					/(?:(?:from|at|on)(?:\s)?)?(\s\b(?!:)\d{1,2})(?:(?:\s)?(?:-|to|(?:un)?till?)(?:\s)?)((?:[01]\d|2[0-3])(?::?(?:[0-5]\d)))(?:\s?(afternoon|evening|night))?/gi,
+					new RegExp('((?:' + this.sets.range.prefix.join('|') + '\s)?(?:\d{1,2})(?:\:)(\d{2}))\s?(?:' + this.sets.range.splitter.join('|') + ')\s?((\d{1,2})(?:\:)(\d{2}))', 'gi'),
+					]
 			},
 
 			// Nicers
@@ -248,6 +264,7 @@
 		},
 
 		setText: function (source) {
+			this.getNow();
 			this.event = this.eventTemplate;
 			this.event.sourceText = source;
 			this.cleanup();
@@ -266,6 +283,9 @@
 			return this.event.sourceText;
 		},
 
+		hasDatesParsed: function() {
+			return this.event.parsedDates.length > 0;
+		},
 
 		parseRecurrent: function () {
 			var match, re;
@@ -286,8 +306,6 @@
 
 
 			}
-
-
 		},
 
 		parseToken: function (string, date, previousDate) {
@@ -295,7 +313,7 @@
 		},
 
 		parse: function (source) {
-			var match, matches;
+			var match, matches, formattedString;
 
 			if (typeof source === "string") this.setText(source);
 
@@ -398,12 +416,123 @@
 			if (this.checkRecurrency()) {
 				this.parseRecurrent();
 			} else {
+				
+			}
+
+			// parse uncommon relative date instances
+			// todo: in n days, day after tomorrow
+			// !!!!!!!!!
+
+
+			// Convert common relative dates given
+			while (matches = this.patterns.dates.relative.common.exec(this.event.parsedText)) {
+
+				var hasLast = false,
+					hasNext = false,
+					hasSelf = false,
+					hasNumber = false,
+					relativeIndex = 0,
+					found = false,
+					date, month, year;
+
+				match = matches.filter(filterUndefined);
+				this.patterns.dates.relative.common.lastIndex = matches.index + 1;
+
+				// changing to MM/DD || MM/DD/YYYY
+				//console.dir(match);
+				//this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
+
+				// relative suffix matched
+				if (match.length == 3) {
+					relativeIndex = 2;
+					switch (match[1]) {
+						case 'last': hasLast = true; break;
+						case 'next': hasNext = true; break;
+						case 'this': hasSelf = true; break;
+						default:
+							console.warn('something like ', match[1], ' found');
+							break;
+					}
+				} else relativeIndex = 1;
+
+
+				// todo: if relative date relates to today, should check time. if it already passed, check next relative.
+				// weekdays
+				if (found = this.sets.weekday.indexOf(match[relativeIndex]) && found > 0) {
+					if (this.getNow().getDay() == parseInt(found)){
+
+					} else {
+
+					}
+					this.now.setDate(this.getNow().getDate() + (x+(7-this.getNow().getDay())) % 7);
+
+				} else
+
+				// months
+				if  (found = this.sets.month.indexOf(match[relativeIndex]) && found > 0) {
+
+				} else {
+
+					// single
+					switch (match[relativeIndex]) {
+						case 'tomorrow':
+							date = this.getNow().getDate() + 1;
+							month = this.getNow().getMonth();
+							year = this.getNow().getFullYear();
+							formattedString = month + '/' + (date + 1) + '/' + year;
+							break;
+						case 'today':
+							date = this.getNow().getDate();
+							month = this.getNow().getMonth();
+							year = this.getNow().getFullYear();
+							formattedString = month + '/' + date + '/' + year;
+							break;
+						case 'day':
+							if (hasNext) {
+								// same as tomorrow
+								date = this.getNow().getDate() + 1;
+								month = this.getNow().getMonth();
+								year = this.getNow().getFullYear();
+								formattedString = month + '/' + (date + 1) + '/' + year;
+							} else if (hasNumber) {
+
+							}
+							break;
+						case 'week':
+							break;
+						case 'month':
+							break;
+						case 'year':
+							break;
+					}
+
+				}
+
+				this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
+
+				this.event.parsedDates.push({
+					index: preConvertedString.indexOf(match[0]),
+					match: match[0],
+					formattedDate: formattedString,
+					date: {
+						month: month,
+						date: date,
+						year: year
+					}
+				});
+			}
+
+			//Parse time ranges
+			//1) detect and fix low confidence partial ranges given
+			while (matches = this.patterns.times.fullRanges.exec(this.event.parsedText)) {
 
 			}
 
 
-			//parse time ranges
-
+			//2)parse time ranges
+			while (matches = this.patterns.times.fullRanges.exec(this.event.parsedText)) {
+				//
+			}
 			//parse date ranges
 
 
@@ -413,7 +542,6 @@
 			//this.event.tokens = this.event.parsedText.split(this.patterns.rangeSplitters);
 			return this;
 		},
-
 
 		checkRecurrency: function () {
 			var match;
@@ -449,7 +577,6 @@
 	window.EventParser = EventParser;
 
 })();
-
 
 // object helper, merge objects into one single
 function extend() {
