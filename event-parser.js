@@ -6,12 +6,11 @@
  * */
 
 
-
 /*
  * The way it works:
  * 1) convert all known shortens on to full word representations: dec->december, nov->november
  * 2) convert all times into 24hour-format
- * 3) parse and remove recurrent parts from source string for futurer parses.
+ * 3) parse and remove recurrent parts from source string for futurer parses. parse and get exceptions.
  * 4)
  *
  * */
@@ -134,6 +133,9 @@
 
 			 ),*/
 
+			// todo: possible except rules, should be checked
+			recurrenceExcepts: /(?:except)(.+?)(?=on|at|with|from|to|(un)?till?)/gi,
+
 
 			// dates detectors
 			dates: {
@@ -157,9 +159,9 @@
 
 			// todo: add AT, ON in front of detection block
 			times: {
-				singleInstances: /(\d{1,2})(?:\:)(\d{2})(?:\s)?(am|pm)?|(\d{1,2})(?:\s)?(am|pm)/gi,
-				rangeWithHyphen: /s/i,
-				rangeWithFromTo: /s/i,
+				singleInstances: /(?:at|on)?(\d{1,2})(?:\:)(\d{2})(?:\s)?(am|pm)?|(\d{1,2})(?:\s)?(am|pm)/gi,
+				rangeWithHyphen: /((?:from\s)?(?:\d{1,2})(?:\:)(\d{2}))\s?(?:\-|to|(?:un)?till?)\s?((\d{1,2})(?:\:)(\d{2}))/i,
+				rangeWithFromTo: /\s/i,
 			},
 
 			// Nicers
@@ -242,6 +244,7 @@
 				this.event.parsedText = this.event.parsedText.replace(this.patterns.nicers[i][0], this.patterns.nicers[i][1]);
 			}
 
+
 		},
 
 		setText: function (source) {
@@ -262,6 +265,7 @@
 		getText: function () {
 			return this.event.sourceText;
 		},
+
 
 		parseRecurrent: function () {
 			var match, re;
@@ -295,11 +299,6 @@
 
 			if (typeof source === "string") this.setText(source);
 
-			if (this.checkRecurrency()) {
-				this.parseRecurrent();
-			} else {
-
-			}
 			this.event.parsedDates = [];
 
 			// store preformatted sting to store date index positions
@@ -307,41 +306,60 @@
 
 			// parse and format dates
 			// M D Y
-
+			this.patterns.dates.mdyStrings.lastIndex = 0;
 			while (matches = this.patterns.dates.mdyStrings.exec(this.event.parsedText)) {
-				//console.log(this.patterns.dates.mdyStrings.lastIndex);
+
 				match = matches.filter(filterUndefined);
-				console.dir(match);
 
-				this.event.parsedDates.push({
-					index: matches.index,
-					match: match[0]}
-				);
+				// this is actially a tweak, allowing get more matches like matchAll.
+				// todo: get clear view of matchAll
+				this.patterns.dates.mdyStrings.lastIndex = matches.index + 1;
 
-				// matched only month and date
 				// changing to MM/DD || MM/DD/YYYY
 				formattedString = (this.sets.month.indexOf(match[1]) + 1) + '/' + parseInt(match[2]) + ((match.length == 4) ? '/' + match[3] : "");
 				this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
+
+				this.event.parsedDates.push({
+						index: matches.index,
+						match: match[0],
+						formattedDate: formattedString,
+						date: {
+							month: (this.sets.month.indexOf(match[1]) + 1),
+							date: parseInt(match[2]),
+							year: ((match.length == 4) ? '/' + match[3] : undefined)
+						}
+					}
+				);
+
 			}
 
 			// D M Y
+			this.patterns.dates.dmyStrings.lastIndex = 0;
 			while (matches = this.patterns.dates.dmyStrings.exec(this.event.parsedText)) {
 
 				match = matches.filter(filterUndefined);
+				this.patterns.dates.dmyStrings.lastIndex = matches.index + 1;
 
-				this.event.parsedDates.push({index: preConvertedString.indexOf(match[0]), match: match[0]});
+				// changing to MM/DD || MM/DD/YYYY
+				formattedString = (this.sets.month.indexOf(match[2]) + 1) + '/' + parseInt(match[1]) + ((match.length == 4) ? '/' + match[3] : "");
+				this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
 
-				if (match.length >= 4) {
+				this.event.parsedDates.push({
+					index: preConvertedString.indexOf(match[0]),
+					match: match[0],
+					formattedDate: formattedString,
+					date: {
+						month: (this.sets.month.indexOf(match[2]) + 1),
+						date: parseInt(match[1]),
+						year: ((match.length == 4) ? '/' + match[3] : undefined)
+					}
+				});
 
-					// changing to MM/DD || MM/DD/YYYY
-					formattedString = (this.sets.month.indexOf(match[2]) + 1) + '/' + parseInt(match[1]) + ((match.length == 4) ? '/' + match[3] : "");
 
-					this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
-				}
 			}
 
-			// parse and format times
 
+			// parse and format times
 			while (matches = this.patterns.times.singleInstances.exec(this.event.parsedText)) {
 				//if (this.patterns.dates.singleInstances.lastIndex) console.log(this.patterns.dates.singleInstances.lastIndex);
 				var hasMeridian = false,
@@ -349,12 +367,12 @@
 					hours,
 					mins;
 
-					match = matches.filter(filterUndefined);
+				match = matches.filter(filterUndefined);
 				if (match.length >= 3) {
 					if (hasMeridian = (match[match.length - 1] === 'am' || match[match.length - 1] === 'pm')) {
 						meridian = match[match.length - 1];
 
-						hours = (meridian == 'am' && parseInt(match[1]) == 12) ? 0 : (meridian == 'pm' && parseInt(match[1]) < 12) ? parseInt(match[1])+12 : parseInt(match[1]);
+						hours = (meridian == 'am' && parseInt(match[1]) == 12) ? 0 : (meridian == 'pm' && parseInt(match[1]) < 12) ? parseInt(match[1]) + 12 : parseInt(match[1]);
 						mins = (match.length == 3) ? 0 : parseInt(match[2]);
 					} else {
 						hours = parseInt(match[1]);
@@ -364,13 +382,32 @@
 					formattedString = pad(hours, 2) + ':' + pad(mins, 2);
 					this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
 
-					this.event.parsedTimes.push({index: matches.index, match: match[0]});
+					this.event.parsedTimes.push({
+						index: matches.index,
+						match: match[0],
+						formattedTime: formattedString,
+						time: {
+							hours: hours,
+							minutes: mins
+						}
+					});
 				}
+			}
 
-				//parse relatives
-
+			//
+			if (this.checkRecurrency()) {
+				this.parseRecurrent();
+			} else {
 
 			}
+
+
+			//parse time ranges
+
+			//parse date ranges
+
+
+			//parse relatives
 
 
 			//this.event.tokens = this.event.parsedText.split(this.patterns.rangeSplitters);
@@ -383,11 +420,22 @@
 			this.event.isRecurrent = false;
 			this.event.recurrenceText = "";
 
-			while ((match = this.patterns.recurrenceExpression.exec(this.event.parsedText)) != null) {
+			// get all of recurrencies
+			while (match = this.patterns.recurrenceExpression.exec(this.event.parsedText)) {
+				this.patterns.recurrenceExpression.lastIndex = match.index + 1;
 				this.event.isRecurrent = true;
 				this.event.recurrenceText = match[0];
 				this.event.parsedText = this.event.parsedText.replace(this.event.recurrenceText, '');
 			}
+
+			//get all of exceptions for recurrencies
+			if (this.event.isRecurrent) {
+				while (match = this.patterns.recurrenceExcepts.exec(this.event.parsedText)) {
+					this.event.recurrenceExceptionsText = match[0];
+					this.event.parsedText = this.event.parsedText.replace(this.event.recurrenceExceptionsText, '');
+				}
+			}
+
 
 			if (!this.event.isRecurrent) this.event.recurrenceText = "";
 

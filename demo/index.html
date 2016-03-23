@@ -13,7 +13,7 @@
 <body>
 <script>
 	$(function ($) {
-		$.get('test-cases.txt', function (data) {
+		$.get('test-cases-test.txt', function (data) {
 			var tr = "",
 				ep = new EventParser(),
 				table = $('#table'),
@@ -39,7 +39,7 @@
 
 					table.append(row);
 
-
+					console.dir(event);
 				}
 			});
 		});
