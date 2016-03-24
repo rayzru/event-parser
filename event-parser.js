@@ -10,8 +10,9 @@
  * The way it works:
  * 1) convert all known shortens on to full word representations: dec->december, nov->november
  * 2) convert all times into 24hour-format
- * 3) parse and remove recurrent parts from source string for futurer parses. parse and get exceptions.
- * 4)
+ * 3) interpret all related dates and times into real one
+ * 4) parse and remove recurrent parts from source string for futurer parses. parse and get exceptions.
+ * 5)
  *
  * */
 
@@ -26,8 +27,10 @@
 			weekStart: 'sunday' // monday|sunday;
 		};
 
-		// completely new objec
-		this.event = {}
+		this.now = moment();
+
+		// data object
+		this.event = {};
 
 		// checking given configuration
 		if (typeof config === "string") {
@@ -48,6 +51,8 @@
 			recurrenceText: "",
 			parsedDates: [],
 			parsedTimes: [],
+			parsedNames: [],
+			parsedPlaces: [],
 
 			title: "",
 			startDate: null,
@@ -56,10 +61,11 @@
 			until: null,
 			separation: 1,
 			frequency: 'once',
+			count: 0,
 			recurrentAttr: [],
 
 			isRecurrent: false,
-			allDayEvent: true
+			allDay: true
 
 		};
 
@@ -250,18 +256,13 @@
 			return (this.now) ? new Date(this.now.getTime()) : new Date();
 		},
 
-		// curago object wrapper
-		getCurago: function () {
-			return {}
-		},
-
 		// apply new settings into existing configuration
 		apply: function (settings) {
 			this.settings = extend({}, this.settings, settings);
 		},
 
 		formatStrDate: function (date, month, year) {
-			return;
+
 		},
 
 		cleanup: function () {
@@ -270,12 +271,14 @@
 
 			// Complete uncompleted, shortened words, parts and abbrreveations.
 			for (var i = 0; i < this.patterns.nicers.length; i++) {
-				this.event.parsedText = this.event.parsedText.replace(this.patterns.nicers[i][0], this.patterns.nicers[i][1]);
+				this.event.parsedText =
+					this.event.parsedText.replace(this.patterns.nicers[i][0], this.patterns.nicers[i][1]);
 			}
 
 			//convert holidays
 			for (var i = 0; i < this.patterns.holidays.length; i++) {
-				this.event.parsedText = this.event.parsedText.replace(this.patterns.holidays[i][0], this.patterns.holidays[i][1]);
+				this.event.parsedText =
+					this.event.parsedText.replace(this.patterns.holidays[i][0], this.patterns.holidays[i][1]);
 			}
 
 			//normalise numbers
@@ -328,13 +331,14 @@
 						this.getOrdinal(this.sets.number.ordinal.indexOf(match[2].toLowerCase()) + 1);
 				}
 
-				if (formattedString != '') this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
+				if (formattedString != '') this.event.parsedText =
+					this.event.parsedText.replace(match[0], formattedString);
 			}
 			return true;
 		},
 
 		setText: function (source) {
-			this.getNow();
+			this.now = this.getNow();
 			this.event = this.eventTemplate;
 			this.event.sourceText = source;
 			this.event.parsedTitle = this.event.sourceText;
@@ -356,9 +360,20 @@
 		getEvent: function () {
 			return {
 				title: this.event.parsedTitle,
-				startDate: this.event.startDate,
-				endDate: this.event.endDate,
-				allDay: this.event.allDayEvent
+				startDate: new Date(this.event.startDate) || null,
+				endDate: new Date(this.event.endDate) || null,
+				allDay: this.event.allDay
+			};
+		},
+
+		// curago object wrapper
+		getCurago: function () {
+			return {
+				title: this.event.parsedTitle,
+				starts_at: new Date(this.event.startDate).toISOString() || null,
+				ends_at: new Date(this.event.endDate).toISOString() || null,
+				location_name: (this.event.parsedLocations.length) ? this.event.parsedLocations[0] : "",
+				separation: this.event.setPosition,
 			};
 		},
 
@@ -383,7 +398,7 @@
 				this.event.recurrenceText = this.event.recurrenceText.replace(match[0], '');
 
 				// weekdays
-				re = new RegExp(this.sets.weekday.join('|'), 'ig')
+				re = new RegExp(this.sets.weekday.join('|'), 'ig');
 				while (match = re.exec(this.event.recurrenceText)) {
 					this.event.frequency = 'weekly';
 					this.event.recurrentAttr.push({day: this.sets.weekday.indexOf(match[0])})
@@ -421,8 +436,7 @@
 							subjectIndex = 2;
 							hasNumber = parseInt(found[0]);
 						} else {
-							console.warn('something like ', matches[1], ' found');
-
+							console.warn('Unexpected value: ', matches[1]);
 						}
 						break;
 				}
@@ -470,7 +484,9 @@
 				this.patterns.dates.mdyStrings.lastIndex = matches.index + 1;
 
 				// changing to MM/DD || MM/DD/YYYY
-				formattedString = (this.sets.month.indexOf(match[1]) + 1) + '/' + parseInt(match[2]) + ((match.length == 4) ? '/' + match[3] : "");
+				formattedString =
+					(this.sets.month.indexOf(match[1]) + 1) + '/' + parseInt(match[2]) + ((match.length == 4) ?
+																						  '/' + match[3] : "");
 				this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
 
 				this.event.parsedDates.push({
@@ -495,7 +511,9 @@
 				this.patterns.dates.dmyStrings.lastIndex = matches.index + 1;
 
 				// changing to MM/DD || MM/DD/YYYY
-				formattedString = (this.sets.month.indexOf(match[2]) + 1) + '/' + parseInt(match[1]) + ((match.length == 4) ? '/' + match[3] : "");
+				formattedString =
+					(this.sets.month.indexOf(match[2]) + 1) + '/' + parseInt(match[1]) + ((match.length == 4) ?
+																						  '/' + match[3] : "");
 				this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
 
 				this.event.parsedDates.push({
@@ -505,7 +523,7 @@
 					date: {
 						month: (this.sets.month.indexOf(match[2]) + 1),
 						date: parseInt(match[1]),
-						year: ((match.length == 4) ? '/' + match[3] : undefined)
+						year: ((match.length == 4) ? match[3] : undefined)
 					}
 				});
 			}
@@ -520,7 +538,9 @@
 					if (hasMeridian = (match[match.length - 1] === 'am' || match[match.length - 1] === 'pm')) {
 						meridian = match[match.length - 1];
 
-						hour = (meridian == 'am' && parseInt(match[1]) == 12) ? 0 : (meridian == 'pm' && parseInt(match[1]) < 12) ? parseInt(match[1]) + 12 : parseInt(match[1]);
+						hour = (meridian == 'am' && parseInt(match[1]) == 12) ? 0 :
+							   (meridian == 'pm' && parseInt(match[1]) < 12) ? parseInt(match[1]) + 12 :
+							   parseInt(match[1]);
 						min = (match.length == 3) ? 0 : parseInt(match[2]);
 					} else {
 						hour = parseInt(match[1]);
@@ -563,19 +583,29 @@
 				var relPrefix = this.parseRelPrefix(match);
 				var relSuffix = this.parseRelSuffix(match);
 
+
 				// todo: if relative date relates to today, should check time. if it already passed, check next relative.
 
 				// weekdays
 				if (this.sets.weekday.indexOf(match[relPrefix.subjectIndex]) >= 0) {
+					var subjectDay = this.sets.weekday.indexOf(match[relPrefix.subjectIndex]);
 
 					// todo: parse suffix (14th, 11th) as well
 
-					tmpDate = new Date(this.getNow().getFullYear,
-						this.getNow().getMonth(),
-						this.getNow().getDate() +
-						(this.getNow().getDay() <= this.sets.weekday.indexOf(match[relPrefix.subjectIndex]) ?
-							this.sets.weekday.indexOf(match[relPrefix.subjectIndex]) :
-						this.sets.weekday.indexOf(match[relPrefix.subjectIndex]) + (relPrefix.self) ? 0 : 7 ) - this.getNow().getDay());
+					if (relPrefix.next) {
+						tmpDate = moment(this.now).day(subjectDay + 7);
+					} else if (relPrefix.last) {
+						if (moment(this.now).endOf('month').day() < subjectDay) {
+							tmpDate = new Date(moment(this.now).endOf('month').day(subjectDay).subtract(1, 'week'));
+						} else {
+							tmpDate = new Date(moment(this.now).endOf('month').day(subjectDay));
+						}
+					} else if (relPrefix.number > 0) {
+
+					} else {
+						// no suffixes?
+						tmpDate = new Date(moment(this.now).day(subjectDay));
+					}
 
 					date = tmpDate.getDate();
 					month = tmpDate.getMonth();
@@ -586,7 +616,12 @@
 				} else
 
 				// months
+
 				if (this.sets.month.indexOf(match[relPrefix.subjectIndex]) > 0) {
+
+					/// need cases
+					var subjectMonth = this.sets.month.indexOf(match[relPrefix.subjectIndex]);
+
 					if (this.getNow().getMonth() == this.sets.month.indexOf(match[relPrefix.subjectIndex]) + 1) {
 
 					} else {
@@ -646,14 +681,14 @@
 
 			//Parse time ranges
 			//1) detect and fix low confidence partial ranges given
-			while (matches = this.patterns.times.fullRanges.exec(this.event.parsedText)) {
-
+			while (matches = this.patterns.times.partialRanges.exec(this.event.parsedText)) {
+				console.log('time partial ranges');
 			}
 
 
 			//2)parse time ranges
 			while (matches = this.patterns.times.fullRanges.exec(this.event.parsedText)) {
-				//
+				console.log('time full ranges');
 			}
 			//parse date ranges
 
