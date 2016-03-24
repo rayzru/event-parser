@@ -99,20 +99,12 @@
 		this.sets = {
 			weekday: ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'],
 			month: ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'],
-			day: {
+			number: {
 				prefix: ['twenty', 'thirty'],
-				suffix: ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'nineth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'],
-				single: ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
+				relativeSuffix: ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh', 'eighth', 'nineth', 'tenth', 'eleventh', 'twelfth', 'thirteenth', 'fourteenth', 'fifteenth', 'sixteenth', 'seventeenth', 'eighteenth', 'nineteenth'],
+				normalSuffix: ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
 			},
-			holidays: [
-				[/thanksgiving/gi, 'every 4th thuesday of november'], 	// USA, but not Canada
-				[/christmas|xmas|x-mas/gi, '12/25'], 					// USA?
-				[/new\s?year(:?\'s)?(\seve)?/gi, '12/31 at 23:00'],
-				[/new\s?year(:?\'s)?/gi, '1/1'],
-				[/april\sfools/gi, '4/1'],
-				[/halloween/gi, '10/30']
-			],
-			range:  {
+			range: {
 				splitter: ['to', '-', '(?:un)?till?', 'through', 'thru', 'and', 'ends'],
 				prefix: ['from', 'start(?:ing)?', 'on', 'at']
 			},
@@ -124,12 +116,12 @@
 
 		this.patterns = {
 
-			rangeSplitters: /(\bto\b|\-|\b(?:un)?till?\b|\bthrough\b|\bthru\b|\band\b|\bends?\b)/ig,
+			//rangeSplitters: /(\bto\b|\-|\b(?:un)?till?\b|\bthrough\b|\bthru\b|\band\b|\bends?\b)/ig,
 			//weekdays: new RegExp(this.sets.weekday.join('|'), 'i'),
 			//recurrenceWeekdays: /(((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?\s?(?:,|and|&)?\s?){2,})/gi,
 			//recurrenceWords: /\b(each|every|\d+\s?times|weekdays|(year|month|week|dai|hour)ly|weekends|ann(?:iversary)?|(monday|tuesday|wednesday|thursday|friday|saturday|sunday)s)\b/i,
 
-			// todo: add dates masks
+			// todo: add dates numbers masks
 			// todo: add not listed atricules like on, at for ewxclusion
 			recurrenceExpression: /(((?:at|on)?((every|each)?(?:\s)?(first|next|last|other)?)(?:\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|((every|each)\s+?(?:other|last|first|next)?\s?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)|(weekday|weekend|week|month|day|year)))|((sunday|monday|tuesday|wednesday|thursday|friday|saturday)s|(dai|week|month|year)ly|weekends|weekdays))/gi,
 
@@ -141,7 +133,11 @@
 			// todo: possible except rules, should be checked
 			recurrenceExcepts: /(?:except)(.+?)(?=on|at|with|from|to|(un)?till?)/gi,
 
-
+			numbers: new RegExp(
+				'\s(\d+(?:st|dn|rd|th)?)|' +
+				'((' + this.sets.number.prefix.join('|') + '(?:-| ))?(' + this.sets.number.relativeSuffix.join('|') + '))|' +
+				'((' + this.sets.number.prefix.join('|') + '(?:-| ))?(' + this.sets.number.normalSuffix.join('|') + '))|' +
+				'\s', 'gi'),
 			// dates detectors
 			dates: {
 				// june 12, june 12th, june 12th 2001, "june 12th, of 2001"
@@ -163,9 +159,9 @@
 					dayAfterTomorrow: /(\bday\safter\stomorrow\b)/ig,
 					inNDays: /\bin\s(\d+)days?\b/ig
 				},
-			// date ranges
-			// from - to, in between
-			ranges: /s/ig
+				// date ranges
+				// from - to, in between
+				ranges: /s/ig
 
 			},
 
@@ -177,7 +173,7 @@
 					// todo: !!! finish this
 					/(?:(?:from|at|on)(?:\s)?)?(\s\b(?!:)\d{1,2})(?:(?:\s)?(?:-|to|(?:un)?till?)(?:\s)?)((?:[01]\d|2[0-3])(?::?(?:[0-5]\d)))(?:\s?(afternoon|evening|night))?/gi,
 					new RegExp('((?:' + this.sets.range.prefix.join('|') + '\s)?(?:\d{1,2})(?:\:)(\d{2}))\s?(?:' + this.sets.range.splitter.join('|') + ')\s?((\d{1,2})(?:\:)(\d{2}))', 'gi'),
-					]
+				]
 			},
 
 			// Nicers
@@ -220,6 +216,15 @@
 				[/(\bsep(?:t(?:ember)?)?\b)/i, 'september'],
 				[/(\boct(?:ober)?\b)/i, 'october'],
 				[/(\bdec(?:ember)?\b)/i, 'december']
+			],
+
+			holidays: [
+				[/\b(thanksgiving)\b/gi, 'every 4th thuesday of november'], 	// USA, but not Canada
+				[/\b(christmas|xmas|x-mas)\b/gi, '12/25'], 					// USA?
+				[/\b(new\s?year(:?\'s)?(\seve))\b/gi, '12/31 at 23:00'],
+				[/\b(new\s?year(:?\'s)\b)?/gi, '1/1'],
+				[/\b(april\sfools)\b/gi, '4/1'],
+				[/\b(halloween)\b/gi, '10/30']
 			]
 		};
 
@@ -260,6 +265,14 @@
 				this.event.parsedText = this.event.parsedText.replace(this.patterns.nicers[i][0], this.patterns.nicers[i][1]);
 			}
 
+			//convert holidays
+			for (var i = 0; i < this.patterns.holidays.length; i++) {
+				this.event.parsedText = this.event.parsedText.replace(this.patterns.holidays[i][0], this.patterns.holidays[i][1]);
+			}
+
+			//normalise numbers
+			console.log(this.patterns.numbers);
+
 
 		},
 
@@ -283,7 +296,7 @@
 			return this.event.sourceText;
 		},
 
-		hasDatesParsed: function() {
+		hasDatesParsed: function () {
 			return this.event.parsedDates.length > 0;
 		},
 
@@ -308,16 +321,57 @@
 			}
 		},
 
-		parseToken: function (string, date, previousDate) {
+		parsePrefix: function (matches) {
+			var hasLast = false,
+				hasNext = false,
+				hasSelf = false,
+				hasNumber = false,
+				subjectIndex;
+
+			// relative suffix matched
+			if (match.length >= 3) {
+				switch (match[1]) {
+					case 'last':
+						hasLast = true;
+						break;
+					case 'next':
+						hasNext = true;
+						break;
+					case 'this':
+						hasSelf = true;
+						break;
+					default:
+						// relative word suffix not found.
+
+						//match()
+
+						subjectIndex = 1;
+						console.warn('something like ', match[1], ' found');
+						break;
+				}
+				subjectIndex = 1;
+			} else subjectIndex = 1;
+
+			return {
+				last: hasLast,
+				next: hasNext,
+				self: hasSelf,
+				number: hasNumber,
+				subjectIndex: subjectIndex
+			}
+		},
+
+		parseSuffix: function (matches) {
 
 		},
 
 		parse: function (source) {
 			var match, matches, formattedString;
 
-			if (typeof source === "string") this.setText(source);
+			//this.event.parsedDates = [];
+			// todo: why am i doing ^^^ this?
 
-			this.event.parsedDates = [];
+			if (typeof source === "string") this.setText(source);
 
 			// store preformatted sting to store date index positions
 			var preConvertedString = this.event.parsedText;
@@ -416,7 +470,7 @@
 			if (this.checkRecurrency()) {
 				this.parseRecurrent();
 			} else {
-				
+
 			}
 
 			// parse uncommon relative date instances
@@ -446,31 +500,47 @@
 				if (match.length == 3) {
 					relativeIndex = 2;
 					switch (match[1]) {
-						case 'last': hasLast = true; break;
-						case 'next': hasNext = true; break;
-						case 'this': hasSelf = true; break;
+						case 'last':
+							hasLast = true;
+							break;
+						case 'next':
+							hasNext = true;
+							break;
+						case 'this':
+							hasSelf = true;
+							break;
 						default:
-							console.warn('something like ', match[1], ' found');
+							console.warn('unexpected moken \'', match[1], '\' found');
 							break;
 					}
 				} else relativeIndex = 1;
 
-
 				// todo: if relative date relates to today, should check time. if it already passed, check next relative.
 				// weekdays
-				if (found = this.sets.weekday.indexOf(match[relativeIndex]) && found > 0) {
-					if (this.getNow().getDay() == parseInt(found)){
+				console.log('found: ',match[0], 'subject: ', match[relativeIndex]);
 
+				if (this.sets.weekday.indexOf(match[relativeIndex]) > 0) {
+					if (this.getNow().getDay() == this.sets.weekday.indexOf(match[relativeIndex])) {
+						//
 					} else {
+						//
+						var relDate =  new Date(this.getNow());
 
+						//relDate.setDate(this.getNow().getDate() + )
 					}
-					this.now.setDate(this.getNow().getDate() + (x+(7-this.getNow().getDay())) % 7);
+
+					//this.now.setDate(this.getNow().getDate() + (x+(7-this.getNow().getDay())) % 7);
 
 				} else
 
 				// months
-				if  (found = this.sets.month.indexOf(match[relativeIndex]) && found > 0) {
+				if (this.sets.month.indexOf(match[relativeIndex])  > 0) {
+					if (this.getNow().getMonth() == this.sets.month.indexOf(match[relativeIndex]) + 1) {
 
+					} else {
+
+					}
+					//this.now.setDate(this.getNow().getDate() + (x+(7-this.getNow().getDay())) % 7);
 				} else {
 
 					// single
