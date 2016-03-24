@@ -44,6 +44,7 @@
 		this.eventTemplate = {
 			sourceText: "",
 			parsedText: "",
+			parsedTitle: "",
 			recurrenceText: "",
 			parsedDates: [],
 			parsedTimes: [],
@@ -336,6 +337,7 @@
 			this.getNow();
 			this.event = this.eventTemplate;
 			this.event.sourceText = source;
+			this.event.parsedTitle = this.event.sourceText;
 			this.cleanup();
 			return this;
 		},
@@ -352,7 +354,12 @@
 		},
 
 		getEvent: function () {
-			return this.event;
+			return {
+				title: this.event.parsedTitle,
+				startDate: this.event.startDate,
+				endDate: this.event.endDate,
+				allDay: this.event.allDayEvent
+			};
 		},
 
 		getText: function () {
@@ -655,7 +662,7 @@
 
 
 			//this.event.tokens = this.event.parsedText.split(this.patterns.rangeSplitters);
-			return this;
+			return this.getEvent();
 		},
 
 		checkRecurrency: function () {

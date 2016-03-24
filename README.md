@@ -8,17 +8,32 @@ Event Parser
 * detects relative dates
 * support multiple formats
 * can detect recurrency
-* suggests event title, places and involved names
+* suggests event title, places and involved names at given subject
 
 
-###Examples
+
+###Usage
 
 
 ```javascript
-{
-
-}
+var event = new EventParser();
+console.log(event.parse("today"));
 ```
+
+```json
+{
+	title: "today",
+	startDate: '',  //
+	endDate: ''
+}
+````
+
+###Install
+Use Bower to install library:
+```sh
+bower install --save event-parser.js
+```
+
 ###Todo
 * Support RRULE
 
