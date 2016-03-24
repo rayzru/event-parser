@@ -182,12 +182,10 @@
 			// todo: add AT, ON in front of detection block
 			times: {
 				singleInstances: /(?:at|on)?(\d{1,2})(?:\:)(\d{2})(?:\s)?(am|pm)?|(\d{1,2})(?:\s)?(am|pm)/gi,
-				fullRanges: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\s)?(?:\d{1,2})(?:\:)(\d{2}))\s?(?:' + this.sets.range.splitter.join('|') + ')\s?((\d{1,2})(?:\:)(\d{2}))', 'gi'),
-				partialRanges: [
-					// todo: !!! finish this
-					/(?:(?:from|at|on)(?:\s)?)?(\s\b(?!:)\d{1,2})(?:(?:\s)?(?:-|to|(?:un)?till?)(?:\s)?)((?:[01]\d|2[0-3])(?::?(?:[0-5]\d)))(?:\s?(afternoon|evening|night))?/gi,
-					new RegExp('((?:' + this.sets.range.prefix.join('|') + '\s)?(?:\d{1,2})(?:\:)(\d{2}))\s?(?:' + this.sets.range.splitter.join('|') + ')\s?((\d{1,2})(?:\:)(\d{2}))', 'gi'),
-				]
+				fullRanges: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?:\:)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?::)(\\d{2}))', 'gi'),
+				partialX2Time: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\d{1,2})(?:\:)(\d{2}))\s?(?:' + this.sets.range.splitter.join('|') + ')\s?((\d{1,2})(?:\:)(\d{2}))', 'gi'),
+				partialTime2X: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\d{1,2})(?:\:)(\d{2}))\s?(?:' + this.sets.range.splitter.join('|') + ')\s?((\d{1,2})(?:\:)(\d{2}))', 'gi'),
+
 			},
 
 			// Nicers
@@ -681,15 +679,30 @@
 
 			//Parse time ranges
 			//1) detect and fix low confidence partial ranges given
-			while (matches = this.patterns.times.partialRanges.exec(this.event.parsedText)) {
-				console.log('time partial ranges');
-			}
-
 
 			//2)parse time ranges
-			while (matches = this.patterns.times.fullRanges.exec(this.event.parsedText)) {
-				console.log('time full ranges');
+
+
+			// not useful actually. if we got all dates parsed/
+			// todo: figure it out.
+			if (false || this.event.parsedTimes.length == 4) {
+				while (matches = this.patterns.times.fullRanges.exec(this.event.parsedText)) {
+					console.log('time full ranges');
+				}
 			}
+
+			// should check if there is no enough dates parsed
+			if (this.event.parsedTimes.length == 1) {
+
+				while (matches = this.patterns.times.partialX2Time.exec(this.event.parsedText)) {
+					console.log('time partial ranges');
+				}
+
+				while (matches = this.patterns.times.partialTime2X.exec(this.event.parsedText)) {
+					console.log('time partial ranges');
+				}
+			}
+
 			//parse date ranges
 
 
@@ -697,7 +710,82 @@
 
 
 			//this.event.tokens = this.event.parsedText.split(this.patterns.rangeSplitters);
-			return this;
+
+
+			// finalize dates
+			// todo: complete incomplete dates.
+
+			// suggest evend data
+			if (this.event.parsedDates.length >= 1) {
+				this.event.startDate =
+					new Date(
+						moment()
+							.year(this.event.parsedDates[0].date.year || moment().year())
+							.month(this.event.parsedDates[0].date.month)
+							.date(this.event.parsedDates[0].date.date)
+					);
+
+				if (this.event.parsedDates.length == 2) {
+					this.event.startDate =
+						new Date(
+							moment()
+								.year(this.event.parsedDates[1].date.year || moment().year())
+								.month(this.event.parsedDates[1].date.month)
+								.date(this.event.parsedDates[1].date.date)
+						);
+				}
+
+			} else {
+				this.event.startTime = new Date(this.now);
+			}
+
+			if (this.event.parsedTimes.length >= 1) {
+				this.event.startTime.setHours(this.event.parsedTimes[0].time.hour);
+				this.event.startTime.setMinutes(this.event.parsedTimes[0].time.min);
+
+				if (this.event.parsedTimes.length == 2) {
+
+					if (this.event.parsedDates.length == 1) this.event.endTime = this.event.startTime;
+
+					this.event.endTime =
+						moment(this.event.endTime)
+							.hours(this.event.parsedTimes[0].time.hour)
+							.minutes(this.event.parsedTimes[0].time.min);
+				}
+
+			}
+
+
+			if (this.event.parsedDates.length == 1) {
+				if (this.event.parsedTimes.length == 0) {
+					this.event.startDate =
+						new Date(
+							this.event.parsedDates[0].date.year || this.now.getFullYear(),
+							this.event.parsedDates[0].date.month,
+							this.event.parsedDates[0].date.date
+						);
+				} else if (this.event.parsedTimes.length == 1) {
+					new Date(
+						this.event.parsedDates[0].date.year || this.now.getFullYear(),
+						this.event.parsedDates[0].date.month,
+						this.event.parsedDates[0].date.date,
+						this.event.parsedTimes[0].time.hour,
+						this.event.parsedTimes[0].time.min
+					);
+				}
+			}
+
+			if (this.event.parsedDates.length == 2)
+				this.event.endDate =
+					new Date(
+						this.event.parsedDates[1].date.year || this.now.getFullYear(),
+						this.event.parsedDates[1].date.month,
+						this.event.parsedDates[1].date.date
+					);
+
+			if ()
+
+				return this;
 		},
 
 		checkRecurrency: function () {
