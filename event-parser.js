@@ -705,12 +705,9 @@
 
 			//parse date ranges
 
-
 			//parse relatives
 
-
 			//this.event.tokens = this.event.parsedText.split(this.patterns.rangeSplitters);
-
 
 			// finalize dates
 			// todo: complete incomplete dates.
@@ -719,19 +716,17 @@
 			if (this.event.parsedDates.length >= 1) {
 				this.event.startDate =
 					new Date(
-						moment()
-							.year(this.event.parsedDates[0].date.year || moment().year())
-							.month(this.event.parsedDates[0].date.month)
-							.date(this.event.parsedDates[0].date.date)
+						this.event.parsedDates[0].date.year || this.now.getFullYear(),
+						this.event.parsedDates[0].date.month,
+						this.event.parsedDates[0].date.date
 					);
 
 				if (this.event.parsedDates.length == 2) {
 					this.event.endDate =
 						new Date(
-							moment()
-								.year(this.event.parsedDates[1].date.year || moment().year())
-								.month(this.event.parsedDates[1].date.month)
-								.date(this.event.parsedDates[1].date.date)
+							this.event.parsedDates[1].date.year || this.now.getFullYear(),
+							this.event.parsedDates[1].date.month,
+							this.event.parsedDates[1].date.date
 						);
 				}
 
@@ -740,8 +735,15 @@
 			}
 
 			if (this.event.parsedTimes.length >= 1) {
-				this.event.startDate.setHours(this.event.parsedTimes[0].time.hour);
-				this.event.startDate.setMinutes(this.event.parsedTimes[0].time.min);
+
+				// such dumb way to format days.
+				// todo: find better way
+				this.event.startDate =
+					moment(this.event.startDate)
+						.startOf('day')
+						.add(this.event.parsedTimes[0].time.hour, 'h')
+						.add(this.event.parsedTimes[0].time.minutes, 'm')
+						.toDate();
 
 				if (this.event.parsedTimes.length == 2) {
 
@@ -749,8 +751,10 @@
 
 					this.event.endDate =
 						moment(this.event.endDate)
-							.hours(this.event.parsedTimes[0].time.hour)
-							.minutes(this.event.parsedTimes[0].time.min);
+							.startOf('day')
+							.add(this.event.parsedTimes[0].time.hour, 'h')
+							.add(this.event.parsedTimes[0].time.minutes, 'h')
+
 				}
 
 			}
