@@ -1,5 +1,5 @@
 {
-  "name": "Event Parser",
+  "name": "event-parser.js",
   "description": "Natural-language event parser for Javascript.",
   "main": "event-parser.js",
   "authors": [
@@ -14,8 +14,6 @@
   ],
   "homepage": "https://github.com/rayzru/event-parser",
   "moduleType": [
-    "amd",
-    "es6",
     "globals"
   ],
   "ignore": [
