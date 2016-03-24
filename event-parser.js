@@ -726,7 +726,7 @@
 					);
 
 				if (this.event.parsedDates.length == 2) {
-					this.event.startDate =
+					this.event.endDate =
 						new Date(
 							moment()
 								.year(this.event.parsedDates[1].date.year || moment().year())
@@ -736,19 +736,19 @@
 				}
 
 			} else {
-				this.event.startTime = new Date(this.now);
+				this.event.startDate = new Date(this.now);
 			}
 
 			if (this.event.parsedTimes.length >= 1) {
-				this.event.startTime.setHours(this.event.parsedTimes[0].time.hour);
-				this.event.startTime.setMinutes(this.event.parsedTimes[0].time.min);
+				this.event.startDate.setHours(this.event.parsedTimes[0].time.hour);
+				this.event.startDate.setMinutes(this.event.parsedTimes[0].time.min);
 
 				if (this.event.parsedTimes.length == 2) {
 
-					if (this.event.parsedDates.length == 1) this.event.endTime = this.event.startTime;
+					if (this.event.parsedDates.length == 1) this.event.endDate = this.event.startDate;
 
-					this.event.endTime =
-						moment(this.event.endTime)
+					this.event.endDate =
+						moment(this.event.endDate)
 							.hours(this.event.parsedTimes[0].time.hour)
 							.minutes(this.event.parsedTimes[0].time.min);
 				}
@@ -756,36 +756,7 @@
 			}
 
 
-			if (this.event.parsedDates.length == 1) {
-				if (this.event.parsedTimes.length == 0) {
-					this.event.startDate =
-						new Date(
-							this.event.parsedDates[0].date.year || this.now.getFullYear(),
-							this.event.parsedDates[0].date.month,
-							this.event.parsedDates[0].date.date
-						);
-				} else if (this.event.parsedTimes.length == 1) {
-					new Date(
-						this.event.parsedDates[0].date.year || this.now.getFullYear(),
-						this.event.parsedDates[0].date.month,
-						this.event.parsedDates[0].date.date,
-						this.event.parsedTimes[0].time.hour,
-						this.event.parsedTimes[0].time.min
-					);
-				}
-			}
-
-			if (this.event.parsedDates.length == 2)
-				this.event.endDate =
-					new Date(
-						this.event.parsedDates[1].date.year || this.now.getFullYear(),
-						this.event.parsedDates[1].date.month,
-						this.event.parsedDates[1].date.date
-					);
-
-			if ()
-
-				return this;
+			return this;
 		},
 
 		checkRecurrency: function () {
