@@ -14,17 +14,18 @@ Event Parser
 
 ###Usage
 
-
 ```javascript
-var event = new EventParser();
-console.log(event.parse("today"));
+var event = new EventParser("Have fun with Jane at home on 11th dec");
+
+console.log(event.parse().getEvent());
 ```
 
-```json
+```javascript
 {
-	title: "today",
-	startDate: '',  //
-	endDate: ''
+	title: "Have fun with Jane at home",
+	startDate: "‌Sun Dec 11 2016 00:00:00 GMT+0300",
+	endDate: "",
+	allDay: true
 }
 ````
 

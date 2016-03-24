@@ -31,7 +31,7 @@
 
 		// checking given configuration
 		if (typeof config === "string") {
-			this.event.sourceText = config;
+			this.setText(config);
 		} else if (typeof config === "object") {
 			this.settings = extend({}, this.defaults, config);
 		}
@@ -662,7 +662,7 @@
 
 
 			//this.event.tokens = this.event.parsedText.split(this.patterns.rangeSplitters);
-			return this.getEvent();
+			return this;
 		},
 
 		checkRecurrency: function () {
