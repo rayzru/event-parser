@@ -31,6 +31,7 @@
 
 		// data object
 		this.event = {};
+		this.curagoEvent = {};
 
 		// checking given configuration
 		if (typeof config === "string") {
@@ -52,7 +53,7 @@
 			parsedDates: [],
 			parsedTimes: [],
 			parsedNames: [],
-			parsedPlaces: [],
+			parsedLocations: [],
 
 			title: "",
 			startDate: null,
@@ -65,12 +66,13 @@
 			recurrentAttr: [],
 
 			isRecurrent: false,
+			isValidDate: false,
 			allDay: true
 
 		};
 
 
-		this.formattedCuragoEvent = {
+		this.curagoEventTemplate = {
 			title: "",
 			starts_at: null,	// event start date
 			ends_at: null,		// event end date
@@ -366,13 +368,16 @@
 
 		// curago object wrapper
 		getCurago: function () {
-			return {
-				title: this.event.parsedTitle,
+
+			var collectedDate = extend({}, this.curagoEventTemplate, {
+				title: this.event.parsedTitle || "",
 				starts_at: new Date(this.event.startDate).toISOString() || null,
 				ends_at: new Date(this.event.endDate).toISOString() || null,
-				location_name: (this.event.parsedLocations.length) ? this.event.parsedLocations[0] : "",
-				separation: this.event.setPosition,
-			};
+				location_name: (this.event.parsedLocations.length) ? this.event.parsedLocations[0] : ""
+				//separation: this.event.setPosition
+			});
+
+			return collectedDate;
 		},
 
 		getText: function () {
@@ -462,7 +467,8 @@
 
 			var date, month, year, hour, min, tmpDate;
 
-			//this.event.parsedDates = [];
+			this.event.parsedDates = [];
+			this.event.parsedTimes = [];
 			// todo: why am i doing ^^^ this?
 
 			if (typeof source === "string") this.setText(source);
@@ -474,7 +480,7 @@
 			// M D Y
 			this.patterns.dates.mdyStrings.lastIndex = 0;
 			while (matches = this.patterns.dates.mdyStrings.exec(this.event.parsedText)) {
-
+				this.event.isValidDate = true;
 				match = matches.filter(filterUndefined);
 
 				// this is actially a tweak, allowing get more matches like matchAll.
@@ -484,7 +490,7 @@
 				// changing to MM/DD || MM/DD/YYYY
 				formattedString =
 					(this.sets.month.indexOf(match[1]) + 1) + '/' + parseInt(match[2]) + ((match.length == 4) ?
-																						  '/' + match[3] : "");
+					'/' + match[3] : "");
 				this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
 
 				this.event.parsedDates.push({
@@ -505,13 +511,15 @@
 			this.patterns.dates.dmyStrings.lastIndex = 0;
 			while (matches = this.patterns.dates.dmyStrings.exec(this.event.parsedText)) {
 
+				this.event.isValidDate = true;
+
 				match = matches.filter(filterUndefined);
 				this.patterns.dates.dmyStrings.lastIndex = matches.index + 1;
 
 				// changing to MM/DD || MM/DD/YYYY
 				formattedString =
 					(this.sets.month.indexOf(match[2]) + 1) + '/' + parseInt(match[1]) + ((match.length == 4) ?
-																						  '/' + match[3] : "");
+					'/' + match[3] : "");
 				this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
 
 				this.event.parsedDates.push({
@@ -531,14 +539,16 @@
 			while (matches = this.patterns.times.singleInstances.exec(this.event.parsedText)) {
 				//if (this.patterns.dates.singleInstances.lastIndex) console.log(this.patterns.dates.singleInstances.lastIndex);
 
+				this.event.isValidDate = true;
+
 				match = matches.filter(filterUndefined);
 				if (match.length >= 3) {
 					if (hasMeridian = (match[match.length - 1] === 'am' || match[match.length - 1] === 'pm')) {
 						meridian = match[match.length - 1];
 
 						hour = (meridian == 'am' && parseInt(match[1]) == 12) ? 0 :
-							   (meridian == 'pm' && parseInt(match[1]) < 12) ? parseInt(match[1]) + 12 :
-							   parseInt(match[1]);
+							(meridian == 'pm' && parseInt(match[1]) < 12) ? parseInt(match[1]) + 12 :
+								parseInt(match[1]);
 						min = (match.length == 3) ? 0 : parseInt(match[2]);
 					} else {
 						hour = parseInt(match[1]);
@@ -574,6 +584,8 @@
 
 			// Convert common relative dates given
 			while (matches = this.patterns.dates.relative.common.exec(this.event.parsedText)) {
+
+				this.event.isValidDate = true;
 
 				match = matches.filter(filterUndefined);
 				this.patterns.dates.relative.common.lastIndex = matches.index + 1;
@@ -614,7 +626,6 @@
 				} else
 
 				// months
-
 				if (this.sets.month.indexOf(match[relPrefix.subjectIndex]) > 0) {
 
 					/// need cases
@@ -654,6 +665,7 @@
 							}
 							break;
 						case 'week':
+
 							break;
 						case 'month':
 							break;
@@ -682,10 +694,9 @@
 
 			//2)parse time ranges
 
-
 			// not useful actually. if we got all dates parsed/
 			// todo: figure it out.
-			if (false || this.event.parsedTimes.length == 4) {
+			if (false || this.event.parsedTimes.length == 411111) {
 				while (matches = this.patterns.times.fullRanges.exec(this.event.parsedText)) {
 					console.log('time full ranges');
 				}
@@ -709,10 +720,60 @@
 
 			//this.event.tokens = this.event.parsedText.split(this.patterns.rangeSplitters);
 
-			// finalize dates
-			// todo: complete incomplete dates.
 
+			//
+			// Finalize dates, make ajustements
+			// ==============================================================
+
+
+			// create Date objects for each element
+			for (var i = 0; i < this.event.parsedDates.length; i++) {
+				var el = this.event.parsedDates[i];
+				if (!el.Date) {
+					if (!isNaN(el.date.year)) {
+						el.Date = new Date().setFullYear(el.date.year, el.date.month, el.date.date);
+						el.hasYear = true;
+					} else {
+						el.Date = new Date().setMonth(el.date.month, el.date.date);
+						// this date is incomplete
+						el.hasYear = false;
+					}
+				}
+
+				this.event.parsedDates[i] = el;
+
+			}
+
+			// create Date objects for each element
+			for (var i = 0; i < this.event.parsedTimes.length; i++) {
+				var el = this.event.parsedTimes[i];
+				el.Time = el.Time || new Date().setHours(el.time.hours, el.time.minutes);
+				this.event.parsedTimes[i] = el;
+			}
+
+
+			// todo: complete incomplete dates.
+			// this.now = this.now(0).setMinutes(0).setMilliseconds(0);
 			// suggest evend data
+
+			if (!this.event.startDate) {
+
+				//
+				if (this.event.parsedDates.length) {
+
+
+				} else if (this.event.parsedTimes.length) {
+
+				} else {
+					this.event.isValidDate = false;
+				}
+
+				if (!this.event.endDate) {
+
+				}
+			}
+
+
 			if (this.event.parsedDates.length >= 1) {
 				this.event.startDate =
 					new Date(
@@ -736,14 +797,21 @@
 
 			if (this.event.parsedTimes.length >= 1) {
 
+				// Huston we got time!
+				this.event.allDay = false;
+
+				this.event.startDate.setHours(0);
+				this.event.startDate.setMinutes(0);
+				this.event.startDate.setMilliseconds(0);
+
 				// such dumb way to format days.
 				// todo: find better way
-				this.event.startDate =
-					moment(this.event.startDate)
-						.startOf('day')
-						.add(this.event.parsedTimes[0].time.hour, 'h')
-						.add(this.event.parsedTimes[0].time.minutes, 'm')
-						.toDate();
+				this.event.startDate.set
+				moment(this.event.startDate)
+					.startOf('day')
+					.add(this.event.parsedTimes[0].time.hour, 'h')
+					.add(this.event.parsedTimes[0].time.minutes, 'm')
+					.toDate();
 
 				if (this.event.parsedTimes.length == 2) {
 
@@ -757,8 +825,9 @@
 
 				}
 
+			} else {
+				this.event.allDay = true;
 			}
-
 
 			return this;
 		},
@@ -789,7 +858,30 @@
 
 			return this.event.isRecurrent;
 
+		},
+
+		helpers: {
+
+			setDayStart: function (dt) {
+				dt = dt || this.now || new Date();
+				return dt.setHours(0, 0, 0, 0);
+			},
+
+			setWeekday: function (dt, weekday, rel) {
+				dt = dt || this.now || new Date();
+
+
+			},
+
+			setMonth: function (dt, month, rel) {
+
+			},
+
+			isSameDay: function (date1, date2) {
+				return date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate() && date1.getFullYear() === date2.getFullYear();
+			}
 		}
+
 
 	};
 
