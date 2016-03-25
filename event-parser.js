@@ -35,7 +35,7 @@
 
 		// checking given configuration
 		if (typeof config === "string") {
-			this.setText(config);
+			this.parse(config);
 		} else if (typeof config === "object") {
 			this.settings = extend({}, this.defaults, config);
 		}
@@ -265,37 +265,34 @@
 
 		},
 
-		cleanup: function () {
+		cleanup: function (source) {
 			var formattedString, match, matches;
-			this.event.parsedText = this.event.sourceText;
 
 			// Complete uncompleted, shortened words, parts and abbrreveations.
 			for (var i = 0; i < this.patterns.nicers.length; i++) {
-				this.event.parsedText =
-					this.event.parsedText.replace(this.patterns.nicers[i][0], this.patterns.nicers[i][1]);
+				source = source.replace(this.patterns.nicers[i][0], this.patterns.nicers[i][1]);
 			}
 
 			//convert holidays
 			for (var i = 0; i < this.patterns.holidays.length; i++) {
-				this.event.parsedText =
-					this.event.parsedText.replace(this.patterns.holidays[i][0], this.patterns.holidays[i][1]);
+				source = source.replace(this.patterns.holidays[i][0], this.patterns.holidays[i][1]);
 			}
 
 			//normalise numbers
 
 			// digitals
 			this.patterns.numbers.numerical.lastIndex = 0;
-			while (matches = this.patterns.numbers.numerical.exec(this.event.parsedText)) {
+			while (matches = this.patterns.numbers.numerical.exec(source)) {
 				match = matches.filter(filterUndefined);
 				this.patterns.numbers.numerical.lastIndex = matches.index + 1;
 
 				// don't believe anyone, just reconvert it.
-				this.event.parsedText = this.event.parsedText.replace(match[0], this.getOrdinal(match[1]));
+				source = source.replace(match[0], this.getOrdinal(match[1]));
 			}
 
 			// not ordinal literal numbers
 			this.patterns.numbers.normal.lastIndex = 0;
-			while (matches = this.patterns.numbers.normal.exec(this.event.parsedText)) {
+			while (matches = this.patterns.numbers.normal.exec(source)) {
 				match = matches.filter(filterUndefined);
 				this.patterns.numbers.normal.lastIndex = matches.index + 1;
 				//?
@@ -303,7 +300,7 @@
 
 			// ordinal literal numbers
 			this.patterns.numbers.ordinal.lastIndex = 0;
-			while (matches = this.patterns.numbers.ordinal.exec(this.event.parsedText)) {
+			while (matches = this.patterns.numbers.ordinal.exec(source)) {
 
 				match = matches.filter(filterUndefined);
 				this.patterns.numbers.ordinal.lastIndex = matches.index + 1;
@@ -331,19 +328,9 @@
 						this.getOrdinal(this.sets.number.ordinal.indexOf(match[2].toLowerCase()) + 1);
 				}
 
-				if (formattedString != '') this.event.parsedText =
-					this.event.parsedText.replace(match[0], formattedString);
+				if (formattedString != '') source = source.replace(match[0], formattedString);
 			}
-			return true;
-		},
-
-		setText: function (source) {
-			this.now = this.getNow();
-			this.event = this.eventTemplate;
-			this.event.sourceText = source;
-			this.event.parsedTitle = this.event.sourceText;
-			this.cleanup();
-			return this;
+			return source;
 		},
 
 		getOrdinal: function (number) {
@@ -460,18 +447,26 @@
 		},
 
 		parse: function (source) {
+
+			source = source || "";
+
+			this.now = this.getNow();
+
+			var event = this.event;
+
+			event = this.eventTemplate;
+
+			event.sourceText = source;
+			event.parsedTitle = event.sourceText;
+
+			this.cleanup();
+
 			var match, matches, formattedString;
 
 			var hasMeridian = false,
 				meridian;
 
 			var date, month, year, hour, min, tmpDate;
-
-			this.event.parsedDates = [];
-			this.event.parsedTimes = [];
-			// todo: why am i doing ^^^ this?
-
-			if (typeof source === "string") this.setText(source);
 
 			// store preformatted sting to store date index positions
 			var preConvertedString = this.event.parsedText;
@@ -689,10 +684,15 @@
 				});
 			}
 
-			//Parse time ranges
-			//1) detect and fix low confidence partial ranges given
+			/** TODO: Parse time ranges
+			 *  1) detect and fix low confidence partial ranges given
+			 *  2)parse time ranges
+			 *
+			 *
+			 * */
 
-			//2)parse time ranges
+
+
 
 			// not useful actually. if we got all dates parsed/
 			// todo: figure it out.
@@ -723,10 +723,9 @@
 
 			//
 			// Finalize dates, make ajustements
-			// ==============================================================
+			// ================================
 
-
-			// create Date objects for each element
+			// create Date objects for each parsed date element
 			for (var i = 0; i < this.event.parsedDates.length; i++) {
 				var el = this.event.parsedDates[i];
 				if (!el.Date) {
@@ -742,9 +741,15 @@
 
 				this.event.parsedDates[i] = el;
 
+
+				// swap 2 parsed dates in incremental date  order.
+				// todo: this should sort whole array (in case there is more than 2 elements)
+				if (this.event.parsedDates.length == 2 && (this.event.parsedDates[0].Date < this.event.parsedDates[1].Date))
+					this.event.parsedDates.swap(0,1);
+
 			}
 
-			// create Date objects for each element
+			// create Time objects for each parsed time element
 			for (var i = 0; i < this.event.parsedTimes.length; i++) {
 				var el = this.event.parsedTimes[i];
 				el.Time = el.Time || new Date().setHours(el.time.hours, el.time.minutes);
@@ -752,15 +757,11 @@
 			}
 
 
-			// todo: complete incomplete dates.
-			// this.now = this.now(0).setMinutes(0).setMilliseconds(0);
-			// suggest evend data
 
 			if (!this.event.startDate) {
 
 				//
 				if (this.event.parsedDates.length) {
-
 
 				} else if (this.event.parsedTimes.length) {
 
@@ -908,4 +909,11 @@ function pad(num, size) {
 
 function filterUndefined(el) {
 	return el != undefined;
+}
+
+Array.prototype.swap = function (x, y) {
+	var b = this[x];
+	this[x] = this[y];
+	this[y] = b;
+	return this;
 }
