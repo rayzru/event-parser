@@ -546,7 +546,7 @@
 		},
 
 		parseRelativeDates: function (event) {
-			var matches, match, targetDate;
+			var matches, match, targetDate, date, month, year, formattedString;
 
 			var now = this.getNow();
 
@@ -571,51 +571,41 @@
 
 					targetDate = this.getNextWeekday(now, subjectDay, relPrefix);
 
-					date = targetDate.getDate();
-					month = targetDate.getMonth();
-					year = targetDate.getFullYear();
-
-					//this.now.setDate(this.getNow().getDate() + (x+(7-this.getNow().getDay())) % 7);
-
 				} else
 
 				// months
 				if (this.sets.month.indexOf(match[relPrefix.subjectIndex]) > 0) {
 
 					/// need cases
-					var subjectMonth = this.sets.month.indexOf(match[relPrefix.subjectIndex]);
+					var subjectMonth = this.sets.month.indexOf(match[relPrefix.subjectIndex]) + 1;
 
-					if (this.getNow().getMonth() == this.sets.month.indexOf(match[relPrefix.subjectIndex]) + 1) {
+					targetDate = this.getNextMonth(now, subjectMonth, relPrefix);
 
-					} else {
+				} else if (false) {
 
-					}
-					//this.now.setDate(this.getNow().getDate() + (x+(7-this.getNow().getDay())) % 7);
+					// parse uncommon relative date instances
+					// todo: in n days, day after tomorrow
+					// !!!!!!!!!
+
 				} else {
 
 					// single
 					switch (match[relPrefix.subjectIndex]) {
 						case 'tomorrow':
-							date = this.getNow().getDate() + 1;
-							month = this.getNow().getMonth();
-							year = this.getNow().getFullYear();
-							formattedString = month + '/' + (date + 1) + '/' + year;
+							targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth(), now.getDate() + 1);
 							break;
 						case 'today':
-							date = this.getNow().getDate();
-							month = this.getNow().getMonth();
-							year = this.getNow().getFullYear();
-							formattedString = month + '/' + date + '/' + year;
+							// today
+							targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth(), now.getDate());
 							break;
 						case 'day':
 							if (relPrefix.next) {
 								// same as tomorrow
-								date = this.getNow().getDate() + 1;
-								month = this.getNow().getMonth();
-								year = this.getNow().getFullYear();
-								formattedString = month + '/' + (date + 1) + '/' + year;
-							} else if (relPrefix.number) {
+								// at next day
+								targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth(), now.getDate());
 
+							} else if (relPrefix.number) {
+								// at Nth day
 							}
 							break;
 						case 'week':
@@ -627,18 +617,20 @@
 							break;
 					}
 
+
 				}
 
-				this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
+				formattedString = targetDate.toLocaleString('en-US'); // MM/DD/YYYY
+				event.parsedText = event.parsedText.replace(match[0], formattedString);
 
 				this.event.parsedDates.push({
 					index: preConvertedString.indexOf(match[0]),
 					match: match[0],
 					formattedDate: formattedString,
 					date: {
-						month: month,
-						date: date,
-						year: year
+						month: targetDate.getMonth(),
+						date: targetDate.getDate(),
+						year: targetDate.getFullYear()
 					}
 				});
 			}
@@ -680,10 +672,6 @@
 
 			// Convert common relative dates given
 			event = this.parseRelativeDates(event);
-
-			// parse uncommon relative date instances
-			// todo: in n days, day after tomorrow
-			// !!!!!!!!!
 
 
 			/** TODO: Parse time ranges
@@ -872,6 +860,30 @@
 				return dt.setHours(0, 0, 0, 0);
 			},
 
+			getNextMonth: function (dt, targetMonth, relativeStates) {
+
+				dt = dt || this.now || new Date();
+				var currentMonth = dt.getMonth();
+				var targetDate;
+
+				targetMonth =
+					(typeof targetMonth == "string" && isNaN(parseInt(targetMonth))) ?
+						this.sets.month.indexOf(targetMonth.toLowerCase()) :
+						parseInt(targetMonth);
+
+				targetDate = (targetMonth <= currentMonth) ?
+					new Date().setFullYear(dt.getFullYear() + 1, targetMonth, 1) :
+					new Date().setFullYear(dt.getFullYear(), targetMonth, 1);
+
+				if (targetMonth == currentMonth && relativeStates.self)
+					targetDate = new Date().setFullYear(dt.getFullYear(), targetMonth, 1);
+
+				if (targetMonth == currentMonth && relativeStates.next)
+					targetDate = new Date().setFullYear(dt.getFullYear() + 1, targetMonth, 1);
+
+				return targetDate;
+			},
+
 			getNextWeekday: function (dt, targetWeekday, relativeStates) {
 
 				dt = dt || this.now || new Date();
@@ -889,7 +901,7 @@
 
 				if (relativeStates.number) {
 					// todo: parse suffix (14th, 11th) as well
-
+					throw "Relative weekdays with dates is currently unsupported";
 				}
 
 				return new Date().setDate(dt.getDate() + daysUntilNext);
