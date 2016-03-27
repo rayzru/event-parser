@@ -339,7 +339,8 @@
 			event.isRecurrent = false;
 			event.recurrenceText = "";
 
-			// get all of recurrencies
+			// get recurrencies
+			// todo: currently gets only one recurrence. That's pity.
 			while (match = this.patterns.recurrenceExpression.exec(event.parsedText)) {
 				this.patterns.recurrenceExpression.lastIndex = match.index + 1;
 				event.isRecurrent = true;
@@ -347,32 +348,35 @@
 				event.parsedText = event.parsedText.replace(event.recurrenceText, '');
 			}
 
-			//get all of exceptions for recurrencies
-			if (event.isRecurrent) {
+			if (!event.isRecurrent) {
+
+				event.recurrenceText = "";
+
+			} else {
+
+				//get all of exceptions for recurrencies
 				while (match = this.patterns.recurrenceExcepts.exec(event.parsedText)) {
 					event.recurrenceExceptionsText = match[0];
 					event.parsedText = event.parsedText.replace(event.recurrenceExceptionsText, '');
 				}
-			}
 
-			if (!event.isRecurrent) event.recurrenceText = "";
+				if (match = /(every|each)/i.exec(event.recurrenceText)) {
+
+					// if every then untill forever
+					event.until = "";
+					event.recurrenceText = event.recurrenceText.replace(match[0], '');
+
+					// weekdays
+					re = new RegExp(this.sets.weekday.join('|'), 'ig');
+					while (match = re.exec(event.recurrenceText)) {
+						event.frequency = 'weekly';
+						event.recurrentAttr.push({day: this.sets.weekday.indexOf(match[0])})
+					}
+
+				} else {
 
 
-			if (match = /(every|each)/i.exec(event.recurrenceText)) {
-
-				// if every then untill forever
-				event.until = "";
-				event.recurrenceText = event.recurrenceText.replace(match[0], '');
-
-				// weekdays
-				re = new RegExp(this.sets.weekday.join('|'), 'ig');
-				while (match = re.exec(event.recurrenceText)) {
-					event.frequency = 'weekly';
-					event.recurrentAttr.push({day: this.sets.weekday.indexOf(match[0])})
 				}
-
-			} else {
-
 
 			}
 
@@ -541,81 +545,35 @@
 			return event;
 		},
 
-		parse: function (source) {
+		parseRelativeDates: function (event) {
+			var matches, match, targetDate;
 
-			if (!source) throw "Nothng to parse";
-
-			var match, matches, formattedString;
-
-			var hasMeridian = false,
-				meridian;
-
-			var date, month, year, hour, min, tmpDate;
-
-			// store preformatted sting to store date index positions
-			var preConvertedString = event.parsedText;
-
-			var event = this.eventTemplate;
-
-			event.sourceText = source;
-			event.parsedTitle = event.sourceText;
-
-			source = this.cleanup(source);
-
-			this.now = this.getNow();
-
-
-			// parse and format dates
-			event = this.parseDates(event);
-
-			// parse and format times
-			event = this.parseTimes(event);
-
-			// go get recurrency ant cut it from
-			event = this.parseRecurrent(event);
-
-			// parse uncommon relative date instances
-			// todo: in n days, day after tomorrow
-			// !!!!!!!!!
+			var now = this.getNow();
 
 			// Convert common relative dates given
-			while (matches = this.patterns.dates.relative.common.exec(this.event.parsedText)) {
+			while (matches = this.patterns.dates.relative.common.exec(event.parsedText)) {
 
-				this.event.isValidDate = true;
+				event.isValidDate = true;
 
-				match = matches.filter(filterUndefined);
+				match = matches.filter(this.helpers.isUndefined);
 				this.patterns.dates.relative.common.lastIndex = matches.index + 1;
 
 				var relPrefix = this.parseRelPrefix(match);
 				var relSuffix = this.parseRelSuffix(match);
 
-
+				//
 				// todo: if relative date relates to today, should check time. if it already passed, check next relative.
 
 				// weekdays
 				if (this.sets.weekday.indexOf(match[relPrefix.subjectIndex]) >= 0) {
+
 					var subjectDay = this.sets.weekday.indexOf(match[relPrefix.subjectIndex]);
 
-					// todo: parse suffix (14th, 11th) as well
+					targetDate = this.getNextWeekday(now, subjectDay, relPrefix);
 
-					if (relPrefix.next) {
-						tmpDate = moment(this.now).day(subjectDay + 7);
-					} else if (relPrefix.last) {
-						if (moment(this.now).endOf('month').day() < subjectDay) {
-							tmpDate = new Date(moment(this.now).endOf('month').day(subjectDay).subtract(1, 'week'));
-						} else {
-							tmpDate = new Date(moment(this.now).endOf('month').day(subjectDay));
-						}
-					} else if (relPrefix.number > 0) {
-
-					} else {
-						// no suffixes?
-						tmpDate = new Date(moment(this.now).day(subjectDay));
-					}
-
-					date = tmpDate.getDate();
-					month = tmpDate.getMonth();
-					year = tmpDate.getFullYear();
+					date = targetDate.getDate();
+					month = targetDate.getMonth();
+					year = targetDate.getFullYear();
 
 					//this.now.setDate(this.getNow().getDate() + (x+(7-this.getNow().getDay())) % 7);
 
@@ -684,6 +642,49 @@
 					}
 				});
 			}
+
+		},
+
+		parse: function (source) {
+
+			if (!source) throw "Nothng to parse";
+
+			var match, matches, formattedString;
+
+			var hasMeridian = false,
+				meridian;
+
+			var date, month, year, hour, min, tmpDate;
+
+			// store preformatted sting to store date index positions
+			var preConvertedString = event.parsedText;
+
+			var event = this.eventTemplate;
+
+			event.sourceText = source;
+			event.parsedTitle = event.sourceText;
+
+			source = this.cleanup(source);
+
+			this.now = this.getNow();
+
+
+			// parse and format dates
+			event = this.parseDates(event);
+
+			// parse and format times
+			event = this.parseTimes(event);
+
+			// go get recurrency ant cut it from
+			event = this.parseRecurrent(event);
+
+			// Convert common relative dates given
+			event = this.parseRelativeDates(event);
+
+			// parse uncommon relative date instances
+			// todo: in n days, day after tomorrow
+			// !!!!!!!!!
+
 
 			/** TODO: Parse time ranges
 			 *  1) detect and fix low confidence partial ranges given
@@ -818,13 +819,13 @@
 		},
 
 		// curago object wrapper
-		getEventCurago: function () {
+		getEventCurago: function (event) {
 
-			var collectedDate = extend({}, this.curagoEventTemplate, {
-				title: this.event.parsedTitle || "",
-				starts_at: new Date(this.event.startDate).toISOString() || null,
-				ends_at: new Date(this.event.endDate).toISOString() || null,
-				location_name: (this.event.parsedLocations.length) ? this.event.parsedLocations[0] : ""
+			var collectedDate = this.helpers.extend({}, this.curagoEventTemplate, {
+				title: event.parsedTitle || "",
+				starts_at: new Date(event.startDate).toISOString() || null,
+				ends_at: new Date(event.endDate).toISOString() || null,
+				location_name: (event.parsedLocations.length) ? event.parsedLocations[0] : ""
 				//separation: this.event.setPosition
 			});
 
@@ -871,13 +872,27 @@
 				return dt.setHours(0, 0, 0, 0);
 			},
 
-			setWeekday: function (dt, weekday, rel) {
+			getNextWeekday: function (dt, targetWeekday, relativeStates) {
+
 				dt = dt || this.now || new Date();
+				var currentWeekday = dt.getDay();
 
+				targetWeekday =
+					(typeof targetWeekday == "string" && isNaN(parseInt(targetWeekday))) ?
+						this.sets.weekday.indexOf(targetWeekday.toLowerCase()) :
+						parseInt(targetWeekday);
 
-			},
+				var daysUntilNext = targetWeekday - currentWeekday + (currentWeekday <= targetWeekday) ? 7 : 0;
 
-			setMonth: function (dt, month, rel) {
+				if (relativeStates.next && currentWeekday == targetWeekday) daysUntilNext += 7;
+				if (relativeStates.self && currentWeekday == targetWeekday) daysUntilNext -= 7;
+
+				if (relativeStates.number) {
+					// todo: parse suffix (14th, 11th) as well
+
+				}
+
+				return new Date().setDate(dt.getDate() + daysUntilNext);
 
 			},
 
