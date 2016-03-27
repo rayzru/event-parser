@@ -37,11 +37,12 @@
 		if (typeof config === "string") {
 			this.parse(config);
 		} else if (typeof config === "object") {
-			this.settings = extend({}, this.defaults, config);
+			this.settings = this.apply(this.defaults, config);
 		}
 
 		// Avoid clobbering the window scope
-		if (window === this) return new EventParser(config);
+		// possibly it;s not necessary
+		// if (window === this) return new EventParser(config);
 
 
 		// event object template
@@ -287,7 +288,7 @@
 				this.patterns.numbers.numerical.lastIndex = matches.index + 1;
 
 				// don't believe anyone, just reconvert it.
-				source = source.replace(match[0], this.getOrdinal(match[1]));
+				source = source.replace(match[0], this.helpers.getOrdinal(match[1]));
 			}
 
 			// not ordinal literal numbers
@@ -320,51 +321,18 @@
 								break;
 						}
 					} else {
-						formattedString = this.getOrdinal(this.sets.number.ordinal.indexOf(match[1].toLowerCase()) + 1);
+						formattedString =
+							this.helpers.getOrdinal(this.sets.number.ordinal.indexOf(match[1].toLowerCase()) + 1);
 					}
 				} else if (match.length == 3) {
 					formattedString =
 						(this.sets.number.prefix.indexOf(match[1].toLowerCase()) + 2) +
-						this.getOrdinal(this.sets.number.ordinal.indexOf(match[2].toLowerCase()) + 1);
+						this.helpers.getOrdinal(this.sets.number.ordinal.indexOf(match[2].toLowerCase()) + 1);
 				}
 
 				if (formattedString != '') source = source.replace(match[0], formattedString);
 			}
 			return source;
-		},
-
-		getOrdinal: function (number) {
-			number = parseInt(number);
-			var s = ["th", "st", "nd", "rd"],
-				v = number % 100;
-			return number + (s[(v - 20) % 10] || s[v] || s[0]);
-		},
-
-		str2num: function (string) {
-
-		},
-
-		getEvent: function () {
-			return {
-				title: this.event.parsedTitle,
-				startDate: new Date(this.event.startDate) || null,
-				endDate: new Date(this.event.endDate) || null,
-				allDay: this.event.allDay
-			};
-		},
-
-		// curago object wrapper
-		getCurago: function () {
-
-			var collectedDate = extend({}, this.curagoEventTemplate, {
-				title: this.event.parsedTitle || "",
-				starts_at: new Date(this.event.startDate).toISOString() || null,
-				ends_at: new Date(this.event.endDate).toISOString() || null,
-				location_name: (this.event.parsedLocations.length) ? this.event.parsedLocations[0] : ""
-				//separation: this.event.setPosition
-			});
-
-			return collectedDate;
 		},
 
 		getText: function () {
@@ -807,7 +775,7 @@
 
 				// such dumb way to format days.
 				// todo: find better way
-				this.event.startDate.set
+				this.event.startDate.set;
 				moment(this.event.startDate)
 					.startOf('day')
 					.add(this.event.parsedTimes[0].time.hour, 'h')
@@ -861,7 +829,49 @@
 
 		},
 
+
+		//
+		// RETURN DATA
+		// ================================
+
+
+		getEvent: function () {
+			return {
+				title: this.event.parsedTitle,
+				startDate: new Date(this.event.startDate) || null,
+				endDate: new Date(this.event.endDate) || null,
+				allDay: this.event.allDay
+			};
+		},
+
+		// curago object wrapper
+		getEventCurago: function () {
+
+			var collectedDate = extend({}, this.curagoEventTemplate, {
+				title: this.event.parsedTitle || "",
+				starts_at: new Date(this.event.startDate).toISOString() || null,
+				ends_at: new Date(this.event.endDate).toISOString() || null,
+				location_name: (this.event.parsedLocations.length) ? this.event.parsedLocations[0] : ""
+				//separation: this.event.setPosition
+			});
+
+			return collectedDate;
+		},
+
+
+		//
+		// Helpers functions
+		// ================================
+
+
 		helpers: {
+
+			getOrdinal: function (number) {
+				number = parseInt(number);
+				var s = ["th", "st", "nd", "rd"],
+					v = number % 100;
+				return number + (s[(v - 20) % 10] || s[v] || s[0]);
+			},
 
 			setDayStart: function (dt) {
 				dt = dt || this.now || new Date();
@@ -916,4 +926,4 @@ Array.prototype.swap = function (x, y) {
 	this[x] = this[y];
 	this[y] = b;
 	return this;
-}
+};
