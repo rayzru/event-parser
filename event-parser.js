@@ -42,7 +42,7 @@
 
 		// Avoid clobbering the window scope
 		// possibly it;s not necessary
-		// if (window === this) return new EventParser(config);
+		if (window === this) return new EventParser(config);
 
 
 		// event object template
@@ -121,9 +121,6 @@
 			},
 			timeRelatives: ['afternoon', 'night', 'evening', 'morning']
 		};
-
-
-		var weekdays = '(' + this.sets.weekday.join('|') + ')';
 
 		this.patterns = {
 
@@ -259,7 +256,7 @@
 
 		// apply new settings into existing configuration
 		apply: function (settings) {
-			this.settings = extend({}, this.settings, settings);
+			this.settings = this.helpers.extend({}, this.settings, settings);
 		},
 
 		formatStrDate: function (date, month, year) {
@@ -284,7 +281,7 @@
 			// digitals
 			this.patterns.numbers.numerical.lastIndex = 0;
 			while (matches = this.patterns.numbers.numerical.exec(source)) {
-				match = matches.filter(filterUndefined);
+				match = matches.filter(this.helpers.isUndefined);
 				this.patterns.numbers.numerical.lastIndex = matches.index + 1;
 
 				// don't believe anyone, just reconvert it.
@@ -294,7 +291,7 @@
 			// not ordinal literal numbers
 			this.patterns.numbers.normal.lastIndex = 0;
 			while (matches = this.patterns.numbers.normal.exec(source)) {
-				match = matches.filter(filterUndefined);
+				match = matches.filter(this.helpers.isUndefined);
 				this.patterns.numbers.normal.lastIndex = matches.index + 1;
 				//?
 			}
@@ -303,7 +300,7 @@
 			this.patterns.numbers.ordinal.lastIndex = 0;
 			while (matches = this.patterns.numbers.ordinal.exec(source)) {
 
-				match = matches.filter(filterUndefined);
+				match = matches.filter(this.helpers.isUndefined);
 				this.patterns.numbers.ordinal.lastIndex = matches.index + 1;
 				formattedString = "";
 				if (match.length == 2) {
@@ -335,37 +332,51 @@
 			return source;
 		},
 
-		getText: function () {
-			return this.event.sourceText;
-		},
+		parseRecurrent: function (event) {
 
-		getFirstWeekday: function () {
-			return (this.settings.weekStart === 'sunday') ? 0 : 1;
-		},
-
-		hasDatesParsed: function () {
-			return this.event.parsedDates.length > 0;
-		},
-
-		parseRecurrent: function () {
 			var match, re;
-			if (match = /(every|each)/i.exec(this.event.recurrenceText)) {
+
+			event.isRecurrent = false;
+			event.recurrenceText = "";
+
+			// get all of recurrencies
+			while (match = this.patterns.recurrenceExpression.exec(event.parsedText)) {
+				this.patterns.recurrenceExpression.lastIndex = match.index + 1;
+				event.isRecurrent = true;
+				event.recurrenceText = match[0];
+				event.parsedText = event.parsedText.replace(event.recurrenceText, '');
+			}
+
+			//get all of exceptions for recurrencies
+			if (event.isRecurrent) {
+				while (match = this.patterns.recurrenceExcepts.exec(event.parsedText)) {
+					event.recurrenceExceptionsText = match[0];
+					event.parsedText = event.parsedText.replace(event.recurrenceExceptionsText, '');
+				}
+			}
+
+			if (!event.isRecurrent) event.recurrenceText = "";
+
+
+			if (match = /(every|each)/i.exec(event.recurrenceText)) {
 
 				// if every then untill forever
-				this.event.until = "";
-				this.event.recurrenceText = this.event.recurrenceText.replace(match[0], '');
+				event.until = "";
+				event.recurrenceText = event.recurrenceText.replace(match[0], '');
 
 				// weekdays
 				re = new RegExp(this.sets.weekday.join('|'), 'ig');
-				while (match = re.exec(this.event.recurrenceText)) {
-					this.event.frequency = 'weekly';
-					this.event.recurrentAttr.push({day: this.sets.weekday.indexOf(match[0])})
+				while (match = re.exec(event.recurrenceText)) {
+					event.frequency = 'weekly';
+					event.recurrentAttr.push({day: this.sets.weekday.indexOf(match[0])})
 				}
 
 			} else {
 
 
 			}
+
+			return event;
 		},
 
 		parseRelPrefix: function (matches) {
@@ -414,36 +425,14 @@
 
 		},
 
-		parse: function (source) {
-
-			source = source || "";
-
-			this.now = this.getNow();
-
-			var event = this.event;
-
-			event = this.eventTemplate;
-
-			event.sourceText = source;
-			event.parsedTitle = event.sourceText;
-
-			this.cleanup();
-
+		parseDates: function (event) {
 			var match, matches, formattedString;
+			var parsedDates = [];
 
-			var hasMeridian = false,
-				meridian;
-
-			var date, month, year, hour, min, tmpDate;
-
-			// store preformatted sting to store date index positions
-			var preConvertedString = this.event.parsedText;
-
-			// parse and format dates
 			// M D Y
 			this.patterns.dates.mdyStrings.lastIndex = 0;
-			while (matches = this.patterns.dates.mdyStrings.exec(this.event.parsedText)) {
-				this.event.isValidDate = true;
+			while (matches = this.patterns.dates.mdyStrings.exec(event.parsedText)) {
+				event.isValidDate = true;
 				match = matches.filter(filterUndefined);
 
 				// this is actially a tweak, allowing get more matches like matchAll.
@@ -454,7 +443,7 @@
 				formattedString =
 					(this.sets.month.indexOf(match[1]) + 1) + '/' + parseInt(match[2]) + ((match.length == 4) ?
 					'/' + match[3] : "");
-				this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
+				event.parsedText = event.parsedText.replace(match[0], formattedString);
 
 				this.event.parsedDates.push({
 						index: matches.index,
@@ -472,9 +461,9 @@
 
 			// D M Y
 			this.patterns.dates.dmyStrings.lastIndex = 0;
-			while (matches = this.patterns.dates.dmyStrings.exec(this.event.parsedText)) {
+			while (matches = this.patterns.dates.dmyStrings.exec(event.parsedText)) {
 
-				this.event.isValidDate = true;
+				event.isValidDate = true;
 
 				match = matches.filter(filterUndefined);
 				this.patterns.dates.dmyStrings.lastIndex = matches.index + 1;
@@ -483,63 +472,107 @@
 				formattedString =
 					(this.sets.month.indexOf(match[2]) + 1) + '/' + parseInt(match[1]) + ((match.length == 4) ?
 					'/' + match[3] : "");
-				this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
 
-				this.event.parsedDates.push({
+				event.parsedText = event.parsedText.replace(match[0], formattedString);
+
+				parsedDates.push({
 					index: preConvertedString.indexOf(match[0]),
 					match: match[0],
 					formattedDate: formattedString,
+					hasYear: match.length == 4,
+					dt: (match.length == 4) ? new Date().setFullYear(el.date.year, el.date.month, el.date.date) : new Date().setMonth(el.date.month, el.date.date),
 					date: {
 						month: (this.sets.month.indexOf(match[2]) + 1),
 						date: parseInt(match[1]),
-						year: ((match.length == 4) ? match[3] : undefined)
+						year: (match.length == 4) ? match[3] : undefined
 					}
 				});
 			}
 
+			// swap 2 parsed dates in incremental date  order.
+			// todo: this should sort whole array (in case there is more than 2 elements)
+			if (event.parsedDates.length == 2 && (this.event.parsedDates[0].dt < this.event.parsedDates[1].dt))
+				event.parsedDates.swap(0, 1);
 
-			// parse and format times
+			return event;
+		},
+
+		parseTimes: function (event) {
+			var hours, minutes, meridian, match, matches;
+
+
 			while (matches = this.patterns.times.singleInstances.exec(this.event.parsedText)) {
 				//if (this.patterns.dates.singleInstances.lastIndex) console.log(this.patterns.dates.singleInstances.lastIndex);
 
-				this.event.isValidDate = true;
+				event.isValidDate = true;
 
 				match = matches.filter(filterUndefined);
 				if (match.length >= 3) {
-					if (hasMeridian = (match[match.length - 1] === 'am' || match[match.length - 1] === 'pm')) {
+					if (match[match.length - 1] === 'am' || match[match.length - 1] === 'pm') {
 						meridian = match[match.length - 1];
 
-						hour = (meridian == 'am' && parseInt(match[1]) == 12) ? 0 :
+						hours = (meridian == 'am' && parseInt(match[1]) == 12) ? 0 :
 							(meridian == 'pm' && parseInt(match[1]) < 12) ? parseInt(match[1]) + 12 :
 								parseInt(match[1]);
-						min = (match.length == 3) ? 0 : parseInt(match[2]);
+						minutes = (match.length == 3) ? 0 : parseInt(match[2]);
 					} else {
-						hour = parseInt(match[1]);
-						min = parseInt(match[2]);
+						hours = parseInt(match[1]);
+						minutes = parseInt(match[2]);
 					}
 
-					formattedString = pad(hour, 2) + ':' + pad(min, 2);
-					this.event.parsedText = this.event.parsedText.replace(match[0], formattedString);
+					formattedString = this.helpers.padNumberWithZeroes(hours, 2) + ':' + this.helpers.padNumberWithZeroes(minutes, 2);
+					event.parsedText = event.parsedText.replace(match[0], formattedString);
+
 
 					this.event.parsedTimes.push({
 						index: matches.index,
+						hasMeridian: meridian || undefined,
 						match: match[0],
 						formattedTime: formattedString,
+						dt: new Date().setHours(el.time.hours, el.time.minutes),
 						time: {
-							hours: hour,
-							minutes: min
+							hours: hours,
+							minutes: minutes
 						}
 					});
 				}
 			}
 
+			return event;
+		},
 
-			//
-			if (this.checkRecurrency()) {
-				this.parseRecurrent();
-			} else {
+		parse: function (source) {
 
-			}
+			if (!source) throw "Nothng to parse";
+
+			var match, matches, formattedString;
+
+			var hasMeridian = false,
+				meridian;
+
+			var date, month, year, hour, min, tmpDate;
+
+			// store preformatted sting to store date index positions
+			var preConvertedString = event.parsedText;
+
+			var event = this.eventTemplate;
+
+			event.sourceText = source;
+			event.parsedTitle = event.sourceText;
+
+			source = this.cleanup(source);
+
+			this.now = this.getNow();
+
+
+			// parse and format dates
+			event = this.parseDates(event);
+
+			// parse and format times
+			event = this.parseTimes(event);
+
+			// go get recurrency ant cut it from
+			event = this.parseRecurrent(event);
 
 			// parse uncommon relative date instances
 			// todo: in n days, day after tomorrow
@@ -660,8 +693,6 @@
 			 * */
 
 
-
-
 			// not useful actually. if we got all dates parsed/
 			// todo: figure it out.
 			if (false || this.event.parsedTimes.length == 411111) {
@@ -694,36 +725,6 @@
 			// ================================
 
 			// create Date objects for each parsed date element
-			for (var i = 0; i < this.event.parsedDates.length; i++) {
-				var el = this.event.parsedDates[i];
-				if (!el.Date) {
-					if (!isNaN(el.date.year)) {
-						el.Date = new Date().setFullYear(el.date.year, el.date.month, el.date.date);
-						el.hasYear = true;
-					} else {
-						el.Date = new Date().setMonth(el.date.month, el.date.date);
-						// this date is incomplete
-						el.hasYear = false;
-					}
-				}
-
-				this.event.parsedDates[i] = el;
-
-
-				// swap 2 parsed dates in incremental date  order.
-				// todo: this should sort whole array (in case there is more than 2 elements)
-				if (this.event.parsedDates.length == 2 && (this.event.parsedDates[0].Date < this.event.parsedDates[1].Date))
-					this.event.parsedDates.swap(0,1);
-
-			}
-
-			// create Time objects for each parsed time element
-			for (var i = 0; i < this.event.parsedTimes.length; i++) {
-				var el = this.event.parsedTimes[i];
-				el.Time = el.Time || new Date().setHours(el.time.hours, el.time.minutes);
-				this.event.parsedTimes[i] = el;
-			}
-
 
 
 			if (!this.event.startDate) {
@@ -801,46 +802,18 @@
 			return this;
 		},
 
-		checkRecurrency: function () {
-			var match;
-			this.event.isRecurrent = false;
-			this.event.recurrenceText = "";
-
-			// get all of recurrencies
-			while (match = this.patterns.recurrenceExpression.exec(this.event.parsedText)) {
-				this.patterns.recurrenceExpression.lastIndex = match.index + 1;
-				this.event.isRecurrent = true;
-				this.event.recurrenceText = match[0];
-				this.event.parsedText = this.event.parsedText.replace(this.event.recurrenceText, '');
-			}
-
-			//get all of exceptions for recurrencies
-			if (this.event.isRecurrent) {
-				while (match = this.patterns.recurrenceExcepts.exec(this.event.parsedText)) {
-					this.event.recurrenceExceptionsText = match[0];
-					this.event.parsedText = this.event.parsedText.replace(this.event.recurrenceExceptionsText, '');
-				}
-			}
-
-
-			if (!this.event.isRecurrent) this.event.recurrenceText = "";
-
-			return this.event.isRecurrent;
-
-		},
-
 
 		//
 		// RETURN DATA
 		// ================================
 
 
-		getEvent: function () {
+		getEvent: function (event) {
 			return {
-				title: this.event.parsedTitle,
-				startDate: new Date(this.event.startDate) || null,
-				endDate: new Date(this.event.endDate) || null,
-				allDay: this.event.allDay
+				title: event.parsedTitle,
+				startDate: new Date(event.startDate) || null,
+				endDate: new Date(event.endDate) || null,
+				allDay: event.allDay
 			};
 		},
 
@@ -865,6 +838,26 @@
 
 
 		helpers: {
+
+			extend: function () {
+				for (var i = 1; i < arguments.length; i++)
+					for (var key in arguments[i])
+						if (arguments[i].hasOwnProperty(key))
+							arguments[0][key] = arguments[i][key];
+				return arguments[0];
+			},
+
+
+			isUndefined: function (el) {
+				return el != undefined;
+			},
+
+			padNumberWithZeroes: function (number, size) {
+				size = size || 2;
+				var result = number + "";
+				while (result.length < size) s = "0" + s;
+				return result;
+			},
 
 			getOrdinal: function (number) {
 				number = parseInt(number);
@@ -902,25 +895,6 @@
 })();
 
 // object helper, merge objects into one single
-function extend() {
-	for (var i = 1; i < arguments.length; i++)
-		for (var key in arguments[i])
-			if (arguments[i].hasOwnProperty(key))
-				arguments[0][key] = arguments[i][key];
-	return arguments[0];
-}
-
-function pad(num, size) {
-	size = size || 2;
-	var s = num + "";
-	while (s.length < size) s = "0" + s;
-	return s;
-}
-
-function filterUndefined(el) {
-	return el != undefined;
-}
-
 Array.prototype.swap = function (x, y) {
 	var b = this[x];
 	this[x] = this[y];
