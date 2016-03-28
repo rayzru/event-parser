@@ -162,6 +162,9 @@
 			},
 			// dates detectors
 			dates: {
+
+				formatted: /((?:(?:on|at)\s)?\d{1,2}\/\d{1,2}(?:\/(?:\d{4}|\d{2}))?)/gi,
+
 				// june 12, june 12th, june 12th 2001, "june 12th, of 2001"
 				// todo: add THE, AT, ON in front of detection block
 				mdyStrings: /(?:(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:(?:\s?,)?\s?of)?\s?(\d{1,2}(?:\s)?(?:|th|st|nd|rd)?)\b)(?:(?:\s?,)?(?:\s?of\s?)?(?:\s)?(20\d{2}|\d{2}[6-9]\d+))?)/gi,
@@ -189,6 +192,7 @@
 
 			// todo: add AT, ON in front of detection block
 			times: {
+				formatted: /((?:(?:at|on)\s)?(?:\d{1,2})(?:\:)(?:\d{2}))/gi,
 				//singleInstances: /(?:at|on)?(\d{1,2})(?:\:)(\d{2})(?:\s)?(am|pm)?|(\d{1,2})(?:\s)?(am|pm)/gi,
 				singleInstances: /(?:(?:at|on)?(\d{1,2})(?:(?:\:)(\d{2}))(?:(?:\s)?(am|pm))?|(\d{1,2})(?:\s)?(am|pm))/gi,
 				fullRanges: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?:\:)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?::)(\\d{2}))', 'gi'),
@@ -799,42 +803,44 @@
 			// Finalize dates, make ajustements
 			// ================================
 
+			event.parsedTitle = event.parsedText;
+			event.parsedTitle = event.parsedTitle.replace(this.patterns.dates.formatted, '');
+			event.parsedTitle = event.parsedTitle.replace(this.patterns.times.formatted, '');
+			//event.parsedTitle = event.parsedTitle.replace(/ +/g, ' ').trim(); // remove multiple spaces
+
 			if (!event.startDate) {
 
 				if (event.parsedDates.length) {
 					// has dates
 					if (event.parsedTimes.length) {
 						// has times
-						if (event.parsedTimes.length == 1) {
-							event.startDate =
-								new Date(
-									event.parsedDates[0].dt.getFullYear(),
-									event.parsedDates[0].dt.getMonth(),
-									event.parsedDates[0].dt.getDate(),
-									event.parsedTimes[0].dt.getHours(),
-									event.parsedTimes[0].dt.getMinutes(), 0, 0
-								);
 
-							if (event.parsedDates.length == 2) {
-								//console.log('one time, two dates');
-							}
+						event.startDate =
+							new Date(
+								event.parsedDates[0].dt.getFullYear(),
+								event.parsedDates[0].dt.getMonth(),
+								event.parsedDates[0].dt.getDate(),
+								event.parsedTimes[0].dt.getHours(),
+								event.parsedTimes[0].dt.getMinutes(), 0, 0
+							);
 
-						} else if (event.parsedTimes.length == 2) {
+
+						if (event.parsedTimes.length == 2) {
 							if (event.parsedDates.length == 1) {
-								event.startDate =
-									new Date(
-										event.parsedDates[0].dt.getFullYear(),
-										event.parsedDates[0].dt.getMonth(),
-										event.parsedDates[0].dt.getDate(),
-										event.parsedTimes[0].dt.getHours(),
-										event.parsedTimes[0].dt.getMinutes(), 0, 0
-									);
-
 								event.endDate =
 									new Date(
 										event.parsedDates[0].dt.getFullYear(),
 										event.parsedDates[0].dt.getMonth(),
 										event.parsedDates[0].dt.getDate(),
+										event.parsedTimes[1].dt.getHours(),
+										event.parsedTimes[1].dt.getMinutes(), 0, 0
+									);
+							} else if (event.parsedDates.length == 2) {
+								event.endDate =
+									new Date(
+										event.parsedDates[1].dt.getFullYear(),
+										event.parsedDates[1].dt.getMonth(),
+										event.parsedDates[1].dt.getDate(),
 										event.parsedTimes[1].dt.getHours(),
 										event.parsedTimes[1].dt.getMinutes(), 0, 0
 									);
@@ -890,9 +896,9 @@
 
 		getEvent: function () {
 			return {
-				title: this.event.parsedText,
-				startDate: new Date(this.event.startDate) || null,
-				endDate: new Date(this.event.endDate) || null,
+				title: this.event.parsedTitle,
+				startDate: (this.event.startDate) ? new Date(this.event.startDate) : null,
+				endDate: (this.event.endDate) ? new Date(this.event.endDate) : null,
 				allDay: this.event.allDay
 			};
 		},
@@ -1077,3 +1083,9 @@ Array.prototype.swap = function (x, y) {
 	this[y] = b;
 	return this;
 };
+
+if (!String.prototype.trim) {
+	String.prototype.trim = function () {
+		return this.replace(/^\s+|\s+$/g, '');
+	};
+}
