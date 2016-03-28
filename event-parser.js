@@ -445,7 +445,7 @@
 					'/' + match[3] : "");
 				event.parsedText = event.parsedText.replace(match[0], formattedString);
 
-				this.event.parsedDates.push({
+				event.parsedDates.push({
 						index: matches.index,
 						match: match[0],
 						formattedDate: formattedString,
@@ -475,12 +475,12 @@
 
 				event.parsedText = event.parsedText.replace(match[0], formattedString);
 
-				parsedDates.push({
+				event.parsedDates.push({
 					index: preConvertedString.indexOf(match[0]),
 					match: match[0],
 					formattedDate: formattedString,
 					hasYear: match.length == 4,
-					dt: (match.length == 4) ? new Date().setFullYear(el.date.year, el.date.month, el.date.date) : new Date().setMonth(el.date.month, el.date.date),
+					dt: (match.length == 4) ? new Date().setFullYear(match[3], this.sets.month.indexOf(match[2]) + 1, match[1]) : new Date().setMonth(this.sets.month.indexOf(match[2]) + 1, match[1]),
 					date: {
 						month: (this.sets.month.indexOf(match[2]) + 1),
 						date: parseInt(match[1]),
@@ -500,12 +500,12 @@
 		parseTimes: function (event) {
 			var hours, minutes, meridian, match, matches;
 
-			while (matches = this.patterns.times.singleInstances.exec(this.event.parsedText)) {
+			while (matches = this.patterns.times.singleInstances.exec(event.parsedText)) {
 				//if (this.patterns.dates.singleInstances.lastIndex) console.log(this.patterns.dates.singleInstances.lastIndex);
 
 				event.isValidDate = true;
 
-				match = matches.filter(filterUndefined);
+				match = matches.filter(this.helpers.isUndefined);
 				if (match.length >= 3) {
 					if (match[match.length - 1] === 'am' || match[match.length - 1] === 'pm') {
 						meridian = match[match.length - 1];
@@ -523,12 +523,12 @@
 					event.parsedText = event.parsedText.replace(match[0], formattedString);
 
 
-					this.event.parsedTimes.push({
+					event.parsedTimes.push({
 						index: matches.index,
-						hasMeridian: meridian || undefined,
+						hasMeridian: meridian || false,
 						match: match[0],
 						formattedTime: formattedString,
-						dt: new Date().setHours(el.time.hours, el.time.minutes),
+						dt: new Date().setHours(hours, minutes),
 						time: {
 							hours: hours,
 							minutes: minutes
@@ -559,21 +559,15 @@
 				//
 				// todo: if relative date relates to today, should check time. if it already passed, check next relative.
 
-				// weekdays
+
 				if (this.sets.weekday.indexOf(match[relPrefix.subjectIndex]) >= 0) {
-
+					// weekdays
 					var subjectDay = this.sets.weekday.indexOf(match[relPrefix.subjectIndex]);
-
 					targetDate = this.getNextWeekday(now, subjectDay, relPrefix);
-
-				} else
-
-				// months
-				if (this.sets.month.indexOf(match[relPrefix.subjectIndex]) > 0) {
-
+				} else if (this.sets.month.indexOf(match[relPrefix.subjectIndex]) > 0) {
+					// months
 					var subjectMonth = this.sets.month.indexOf(match[relPrefix.subjectIndex]) + 1;
 					targetDate = this.getNextMonth(now, subjectMonth, relPrefix);
-
 				} else {
 
 					// single
@@ -593,6 +587,7 @@
 
 							} else if (relPrefix.number) {
 								// at Nth day
+
 							}
 							break;
 						case 'week':
@@ -620,6 +615,8 @@
 						year: targetDate.getFullYear()
 					}
 				});
+
+				return event;
 			}
 
 
@@ -648,11 +645,8 @@
 
 				if (match.length == 2) {
 					targetDate = this.helpers.getDateShifted(now, match[1], 1);
-
 				} else if (match.length == 3) {
-
-
-					targetDate = this.helpers.getDateShifted(now, match[1], 1);
+					targetDate = this.helpers.getDateShifted(now, match[2], match[1]);
 				}
 
 				formattedString = targetDate.toLocaleString('en-US'); // MM/DD/YYYY
@@ -685,17 +679,16 @@
 			var date, month, year, hour, min, tmpDate;
 
 			// store preformatted sting to store date index positions
-			var preConvertedString = event.parsedText;
 
 			var event = this.eventTemplate;
 
-			event.sourceText = source;
-			event.parsedTitle = event.sourceText;
+			event.parsedText = source;
+			event.parsedText = this.cleanup(event.parsedText);
+			event.parsedTitle = event.parsedText;
 
-			source = this.cleanup(source);
+			var preConvertedString = event.parsedText;
 
 			this.now = this.getNow();
-
 
 			// parse and format dates
 			event = this.parseDates(event);
@@ -712,7 +705,7 @@
 
 			/** TODO: Parse time ranges
 			 *  1) detect and fix low confidence partial ranges given
-			 *  2)parse time ranges
+			 *  2) parse time ranges
 			 *
 			 *
 			 * */
@@ -720,20 +713,20 @@
 
 			// not useful actually. if we got all dates parsed/
 			// todo: figure it out.
-			if (false || this.event.parsedTimes.length == 411111) {
-				while (matches = this.patterns.times.fullRanges.exec(this.event.parsedText)) {
+			if (false || event.parsedTimes.length == 411111) {
+				while (matches = this.patterns.times.fullRanges.exec(event.parsedText)) {
 					console.log('time full ranges');
 				}
 			}
 
 			// should check if there is no enough dates parsed
-			if (this.event.parsedTimes.length == 1) {
+			if (event.parsedTimes.length == 1) {
 
-				while (matches = this.patterns.times.partialX2Time.exec(this.event.parsedText)) {
+				while (matches = this.patterns.times.partialX2Time.exec(event.parsedText)) {
 					console.log('time partial ranges');
 				}
 
-				while (matches = this.patterns.times.partialTime2X.exec(this.event.parsedText)) {
+				while (matches = this.patterns.times.partialTime2X.exec(event.parsedText)) {
 					console.log('time partial ranges');
 				}
 			}
@@ -741,8 +734,6 @@
 			//parse date ranges
 
 			//parse relatives
-
-			//this.event.tokens = this.event.parsedText.split(this.patterns.rangeSplitters);
 
 
 			//
@@ -772,17 +763,17 @@
 			if (this.event.parsedDates.length >= 1) {
 				this.event.startDate =
 					new Date(
-						this.event.parsedDates[0].date.year || this.now.getFullYear(),
-						this.event.parsedDates[0].date.month,
-						this.event.parsedDates[0].date.date
+						event.parsedDates[0].date.year || this.now.getFullYear(),
+						event.parsedDates[0].date.month,
+						event.parsedDates[0].date.date
 					);
 
 				if (this.event.parsedDates.length == 2) {
 					this.event.endDate =
 						new Date(
-							this.event.parsedDates[1].date.year || this.now.getFullYear(),
-							this.event.parsedDates[1].date.month,
-							this.event.parsedDates[1].date.date
+							event.parsedDates[1].date.year || this.now.getFullYear(),
+							event.parsedDates[1].date.month,
+							event.parsedDates[1].date.date
 						);
 				}
 
@@ -880,7 +871,7 @@
 			padNumberWithZeroes: function (number, size) {
 				size = size || 2;
 				var result = number + "";
-				while (result.length < size) s = "0" + s;
+				while (result.length < size) result = "0" + result;
 				return result;
 			},
 
@@ -892,7 +883,7 @@
 			},
 
 			strToNumber: function (string) {
-
+				var re = this.sets.number;
 				if (this.patterns.numbers.normal.test(string)) {
 					var parts, number;
 					//var matches = this.patterns.numbers.normal.exec(string);
@@ -900,20 +891,20 @@
 					parts = string.split(/\s|-/g);
 
 					if (parts.length = 2) {
-						number = (this.sets.number.prefix.indexOf(parts[0]) + 1) + ""
-							+ this.sets.number.normal.indexOf(parts[0]) + 1;
+						number =
+							(re.prefix.indexOf(parts[0]) + 1) + "" +
+							(re.normal.indexOf(parts[1]) + 1);
 					} else {
-						if (this.sets.number.normal.indexOf(parts[0]) > 0) {
-							number = this.sets.number.normal.indexOf(parts[0]) + 1;
-						} else {
-							number = (['ten', 'twenty', 'thirty'].indexOf(parts[0]) + 1) * 10;
-						}
+						number =
+							(re.normal.indexOf(parts[0]) > 0) ?
+							re.normal.indexOf(parts[0]) + 1 :
+							(['ten', 'twenty', 'thirty'].indexOf(parts[0]) + 1) * 10;
 					}
 
-					return number;
+					return parseInt(number);
 
 				} else {
-					return false;
+					return null;
 				}
 
 			},
@@ -926,6 +917,20 @@
 			getDateShifted: function (dt, dateModifier, amount) {
 
 				amount = amount || 1;
+
+				if (typeof amount == 'string' && isNaN(amount)) {
+					switch (amount) {
+						case "couple":
+							amount = 2;
+							break;
+						default:
+							amount = this.helpers.strToNumber(amount);
+							break;
+					}
+
+				} else {
+					amount = parseInt(amount);
+				}
 
 				switch (dateModifier) {
 					case "day":
