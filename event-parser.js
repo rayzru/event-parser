@@ -411,8 +411,9 @@
 						}
 						break;
 				}
+			} else {
 				subjectIndex = 1;
-			} else subjectIndex = 1;
+			}
 
 			return {
 				last: hasLast,
@@ -563,11 +564,11 @@
 				if (this.sets.weekday.indexOf(match[relPrefix.subjectIndex]) >= 0) {
 					// weekdays
 					var subjectDay = this.sets.weekday.indexOf(match[relPrefix.subjectIndex]);
-					targetDate = this.getNextWeekday(now, subjectDay, relPrefix);
+					targetDate = this.helpers.getNextWeekday(now, subjectDay, relPrefix);
 				} else if (this.sets.month.indexOf(match[relPrefix.subjectIndex]) > 0) {
 					// months
 					var subjectMonth = this.sets.month.indexOf(match[relPrefix.subjectIndex]) + 1;
-					targetDate = this.getNextMonth(now, subjectMonth, relPrefix);
+					targetDate = this.helpers.getNextMonth(now, subjectMonth, relPrefix);
 				} else {
 
 					// single
@@ -605,6 +606,10 @@
 								targetDate = new Date().setFullYear(now.getFullYear() + 1, now.getMonth() + 1, now.getDate());
 							}
 							break;
+						default:
+							console.log('wat?');
+							break;
+
 					}
 
 				}
@@ -776,9 +781,9 @@
 
 						} else if (event.parsedTimes.length == 2) {
 							event.startDate =
-								new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.parsedTimes[0].dt.getHours(), event.parsedTimes[0].dt.getMinutes(), 0, 0);
+								new Date(now.getFullYear(), now.getMonth(), now.getDate(), new Date(event.parsedTimes[0].dt).getHours(), new Date(event.parsedTimes[0].dt).getMinutes(), 0, 0);
 							event.endDate =
-								new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.parsedTimes[1].dt.getHours(), event.parsedTimes[1].dt.getMinutes(), 0, 0);
+								new Date(now.getFullYear(), now.getMonth(), now.getDate(), new Date(event.parsedTimes[1].dt).getHours(), new Date(event.parsedTimes[1].dt).getMinutes(), 0, 0);
 
 						}
 
@@ -794,10 +799,9 @@
 					}
 				}
 
-				if (!event.endDate) {
-
-				}
 			}
+
+			this.event = event;
 
 			return this;
 		},
@@ -808,23 +812,23 @@
 		// ================================
 
 
-		getEvent: function (event) {
+		getEvent: function () {
 			return {
-				title: event.parsedTitle,
-				startDate: new Date(event.startDate) || null,
-				endDate: new Date(event.endDate) || null,
-				allDay: event.allDay
+				title: this.event.parsedText,
+				startDate: new Date(this.event.startDate) || null,
+				endDate: new Date(this.event.endDate) || null,
+				allDay: this.event.allDay
 			};
 		},
 
 		// curago object wrapper
-		getEventCurago: function (event) {
+		getEventCurago: function () {
 
 			var collectedDate = this.helpers.extend({}, this.curagoEventTemplate, {
-				title: event.parsedTitle || "",
-				starts_at: new Date(event.startDate).toISOString() || null,
-				ends_at: new Date(event.endDate).toISOString() || null,
-				location_name: (event.parsedLocations.length) ? event.parsedLocations[0] : ""
+				title: this.event.parsedText || "",
+				starts_at: new Date(this.event.startDate).toISOString() || null,
+				ends_at: new Date(this.event.endDate).toISOString() || null,
+				location_name: (this.event.parsedLocations.length) ? this.event.parsedLocations[0] : ""
 				//separation: this.event.setPosition
 			});
 
@@ -963,14 +967,16 @@
 						this.sets.weekday.indexOf(targetWeekday.toLowerCase()) :
 						parseInt(targetWeekday);
 
-				var daysUntilNext = targetWeekday - currentWeekday + (currentWeekday <= targetWeekday) ? 7 : 0;
+				var daysUntilNext = targetWeekday - currentWeekday + ((currentWeekday <= targetWeekday) ? 0 : 7);
 
 				if (relativeStates.next && currentWeekday == targetWeekday) daysUntilNext += 7;
 				if (relativeStates.self && currentWeekday == targetWeekday) daysUntilNext -= 7;
 
 				if (relativeStates.number) {
-					// todo: parse suffix (14th, 11th) as well
-					throw "Relative weekdays with dates is currently unsupported";
+					// parse suffix (1st monday, 11th saturday) as well
+					daysUntilNext = (relativeStates.number > 1) ? daysUntilNext + (7 * relativeStates.number) : daysUntilNext;
+					//
+					//throw "Relative weekdays with number magnifiers is currently unsupported";
 				}
 
 				return new Date().setDate(dt.getDate() + daysUntilNext);
