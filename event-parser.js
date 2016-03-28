@@ -50,11 +50,11 @@
 			sourceText: "",
 			parsedText: "",
 			parsedTitle: "",
-			recurrenceText: "",
 			parsedDates: [],
 			parsedTimes: [],
 			parsedNames: [],
 			parsedLocations: [],
+			parsedRecurrencies: [],
 
 			title: "",
 			startDate: null,
@@ -131,7 +131,16 @@
 
 			// todo: add dates numbers masks
 			// todo: add not listed atricules like on, at for ewxclusion
-			recurrenceExpression: /(((?:at|on)?((every|each)?(?:\s)?(first|next|last|other)?)(?:\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|((every|each)\s+?(?:other|last|first|next)?\s?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)|(weekday|weekend|week|month|day|year)))|((sunday|monday|tuesday|wednesday|thursday|friday|saturday)s|(dai|week|month|year)ly|weekends|weekdays))/gi,
+
+			//recurrenceExpression: /(((?:at|on)?((every|each)?(?:\s)?((?:(\d+)(?:st|nd|rd|th))|first|next|last|other)?)(?:\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|((every|each)\s+?(?:other|last|first|next)?\s?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)|(weekday|weekend|week|month|day|year)))|((sunday|monday|tuesday|wednesday|thursday|friday|saturday)s|(dai|week|month|year)ly|weekends|weekdays))/gi,
+			recurrenceExpression: /((?:at|on)\s)?(((every|each)\s)?((((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|((january|february|march|april|may|june|july|august|september|october|november|december)(?:\s)?(?:,|and|&)?\s?){2,}))|((every|each)\s(((?:((?:(twenty|thirty(?:-|\s))?(first|second|third|fourth|fifth|sixth|seventh|eighth|nineth|tenth|eleventh|twelfth|thirteenth|fourteenth|fifteenth|sixteenth|seventeenth|eighteenth|nineteenth))|(?:tenth|twentieth|thirtieth))|(\d+)(?:st|nd|rd|th))|next|last|other)?\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?|(january|february|march|april|may|june|july|august|september|october|november|december)|(weekday|weekend|week|month|day|year)))|(dai|week|month|year)ly|weekends|weekdays/gi,
+			/*recurrenceExpression: new RegExp('' +
+				'((?:at|on)\\s)?' +
+				'?(((every|each)\\s)?' +
+				'((' +
+				'((' + this.sets.weekday.join('|') + ')(?:s)?(?:\\s)?(?:,|and|&)\\s){2,})|' +
+				'((' + this.sets.month.join('|') + ')?(?:\\s)?(?:,|and|&)\\s){2,}))|' +
+				'', 'gi')*/
 
 			/*recurrenceTimes:
 			 new RegExp(
@@ -144,9 +153,9 @@
 			numbers: {
 				numerical: /\b(?:(\d+)(st|nd|rd|th)\b)/gi,
 				ordinal: new RegExp(
-					'(?:\\b(' + this.sets.number.prefix.join('|') + '(?:-| ))?\\b(' + this.sets.number.ordinal.join('|') + '))|' +
-					'\\b(?:tenth|twentieth|thirtieth)' +
-					'\\b', 'gi'),
+					'(?:(' + this.sets.number.prefix.join('|') + '(?:-|\\s))?(' + this.sets.number.ordinal.join('|') + '))|' +
+					'(?:tenth|twentieth|thirtieth)' +
+					'', 'gi'),
 				normal: new RegExp(
 					'((?:(?:(?:' + this.sets.number.prefix.join('|') + ')(?:-|\\s))?(' + this.sets.number.normal.join('|') + '))|' +
 					'(?:ten|' + this.sets.number.prefix.join('|') + '))', 'gi')
@@ -339,16 +348,26 @@
 
 			// get recurrencies
 			// todo: currently gets only one recurrence. That's pity.
-			while (match = this.patterns.recurrenceExpression.exec(event.parsedText)) {
-				this.patterns.recurrenceExpression.lastIndex = match.index + 1;
+			while (matches = this.patterns.recurrenceExpression.exec(event.parsedText)) {
+
+				match = matches.filter(this.helpers.isUndefined);
+
+				this.patterns.recurrenceExpression.lastIndex = matches.index + 1;
+
 				event.isRecurrent = true;
-				event.recurrenceText = match[0];
-				event.parsedText = event.parsedText.replace(event.recurrenceText, '');
+				event.parsedText = event.parsedText.replace(match[0], '');
+
+				event.parsedRecurrencies.push({
+						index: matches.index,
+						match: match[0]
+					}
+				);
+
 			}
 
 			if (!event.isRecurrent) {
 
-				event.recurrenceText = "";
+				//event.recurrenceText = "";
 
 			} else {
 
@@ -358,7 +377,7 @@
 					event.parsedText = event.parsedText.replace(event.recurrenceExceptionsText, '');
 				}
 
-				if (match = /(every|each)/i.exec(event.recurrenceText)) {
+				/*if (match = /(every|each)/i.exec(event.recurrenceText)) {
 
 					// if every then untill forever
 					event.until = "";
@@ -374,7 +393,7 @@
 				} else {
 
 
-				}
+				}*/
 
 			}
 
@@ -477,7 +496,7 @@
 				event.parsedText = event.parsedText.replace(match[0], formattedString);
 
 				event.parsedDates.push({
-					index: preConvertedString.indexOf(match[0]),
+					index: event.preConvertedString.indexOf(match[0]),
 					match: match[0],
 					formattedDate: formattedString,
 					hasYear: match.length == 4,
@@ -617,8 +636,9 @@
 				formattedString = targetDate.toLocaleString('en-US'); // MM/DD/YYYY
 				event.parsedText = event.parsedText.replace(match[0], formattedString);
 
+				console.log(targetDate, event);
 				event.parsedDates.push({
-					index: preConvertedString.indexOf(match[0]),
+					index: event.preConvertedString.indexOf(match[0]),
 					match: match[0],
 					formattedDate: formattedString,
 					date: {
@@ -640,7 +660,7 @@
 				event.parsedText = event.parsedText.replace(matches[0], formattedString);
 
 				event.parsedDates.push({
-					index: preConvertedString.indexOf(matches[0]),
+					index: event.preConvertedString.indexOf(matches[0]),
 					match: match[0],
 					formattedDate: formattedString,
 					date: {
@@ -665,7 +685,7 @@
 				event.parsedText = event.parsedText.replace(matches[0], formattedString);
 
 				event.parsedDates.push({
-					index: preConvertedString.indexOf(matches[0]),
+					index: event.preConvertedString.indexOf(matches[0]),
 					match: match[0],
 					formattedDate: formattedString,
 					date: {
@@ -696,9 +716,8 @@
 
 			event.parsedText = source;
 			event.parsedText = this.cleanup(event.parsedText);
+			event.preConvertedString = event.parsedText;
 			event.parsedTitle = event.parsedText;
-
-			var preConvertedString = event.parsedText;
 
 			this.now = this.getNow();
 			var now = this.now;
@@ -975,8 +994,6 @@
 				if (relativeStates.number) {
 					// parse suffix (1st monday, 11th saturday) as well
 					daysUntilNext = (relativeStates.number > 1) ? daysUntilNext + (7 * relativeStates.number) : daysUntilNext;
-					//
-					//throw "Relative weekdays with number magnifiers is currently unsupported";
 				}
 
 				return new Date().setDate(dt.getDate() + daysUntilNext);
