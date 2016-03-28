@@ -634,7 +634,7 @@
 				formattedString = targetDate.toLocaleString('en-US'); // MM/DD/YYYY
 				event.parsedText = event.parsedText.replace(matches[0], formattedString);
 
-				this.event.parsedDates.push({
+				event.parsedDates.push({
 					index: preConvertedString.indexOf(matches[0]),
 					match: match[0],
 					formattedDate: formattedString,
@@ -659,7 +659,7 @@
 				formattedString = targetDate.toLocaleString('en-US'); // MM/DD/YYYY
 				event.parsedText = event.parsedText.replace(matches[0], formattedString);
 
-				this.event.parsedDates.push({
+				event.parsedDates.push({
 					index: preConvertedString.indexOf(matches[0]),
 					match: match[0],
 					formattedDate: formattedString,
@@ -671,7 +671,7 @@
 				});
 			}
 
-
+			return event;
 		},
 
 		parse: function (source) {
@@ -696,6 +696,7 @@
 			var preConvertedString = event.parsedText;
 
 			this.now = this.getNow();
+			var now = this.now;
 
 			// parse and format dates
 			event = this.parseDates(event);
@@ -747,79 +748,55 @@
 			// Finalize dates, make ajustements
 			// ================================
 
-			// create Date objects for each parsed date element
+			//
+			if (!event.startDate) {
 
+				if (event.parsedDates.length) {
+					// has dates
+					if (event.parsedTimes.length) {
+						// has times
+						if (event.parsedTimes.length == 1) {
 
-			if (!this.event.startDate) {
+						} else if (event.parsedTimes.length == 2) {
 
-				//
-				if (this.event.parsedDates.length) {
-
-				} else if (this.event.parsedTimes.length) {
+						}
+					} else {
+						event.allDay = true;
+					}
 
 				} else {
-					this.event.isValidDate = false;
+					// no dates
+
+					if (event.parsedTimes.length) {
+						// has times
+						if (event.parsedTimes.length == 1) {
+							event.startDate =
+								new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.parsedTimes[0].dt.getHours(), event.parsedTimes[0].dt.getMinutes(), 0, 0);
+
+
+						} else if (event.parsedTimes.length == 2) {
+							event.startDate =
+								new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.parsedTimes[0].dt.getHours(), event.parsedTimes[0].dt.getMinutes(), 0, 0);
+							event.endDate =
+								new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.parsedTimes[1].dt.getHours(), event.parsedTimes[1].dt.getMinutes(), 0, 0);
+
+						}
+
+					} else {
+						event.allDay = true;
+						// has no dates captured, setting event startDate from now
+
+						event.startDate =
+							new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), 0, 0);
+
+						console.info('No dates and times detected');
+						event.isValidDate = false;
+					}
 				}
 
-				if (!this.event.endDate) {
+				if (!event.endDate) {
 
 				}
-			}
-
-
-			if (this.event.parsedDates.length >= 1) {
-				this.event.startDate =
-					new Date(
-						event.parsedDates[0].date.year || this.now.getFullYear(),
-						event.parsedDates[0].date.month,
-						event.parsedDates[0].date.date
-					);
-
-				if (this.event.parsedDates.length == 2) {
-					this.event.endDate =
-						new Date(
-							event.parsedDates[1].date.year || this.now.getFullYear(),
-							event.parsedDates[1].date.month,
-							event.parsedDates[1].date.date
-						);
-				}
-
-			} else {
-				this.event.startDate = new Date(this.now);
-			}
-
-			if (this.event.parsedTimes.length >= 1) {
-
-				// Huston we got time!
-				this.event.allDay = false;
-
-				this.event.startDate.setHours(0);
-				this.event.startDate.setMinutes(0);
-				this.event.startDate.setMilliseconds(0);
-
-				// such dumb way to format days.
-				// todo: find better way
-				this.event.startDate.set;
-				moment(this.event.startDate)
-					.startOf('day')
-					.add(this.event.parsedTimes[0].time.hour, 'h')
-					.add(this.event.parsedTimes[0].time.minutes, 'm')
-					.toDate();
-
-				if (this.event.parsedTimes.length == 2) {
-
-					if (this.event.parsedDates.length == 1) this.event.endDate = this.event.startDate;
-
-					this.event.endDate =
-						moment(this.event.endDate)
-							.startOf('day')
-							.add(this.event.parsedTimes[0].time.hour, 'h')
-							.add(this.event.parsedTimes[0].time.minutes, 'h')
-
-				}
-
-			} else {
-				this.event.allDay = true;
 			}
 
 			return this;
