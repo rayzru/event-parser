@@ -591,21 +591,28 @@
 							}
 							break;
 						case 'week':
-
+							if (relPrefix.next) {
+								targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth(), now.getDate() + 7);
+							}
 							break;
 						case 'month':
+							if (relPrefix.next) {
+								targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth() + 1, now.getDate());
+							}
 							break;
 						case 'year':
+							if (relPrefix.next) {
+								targetDate = new Date().setFullYear(now.getFullYear() + 1, now.getMonth() + 1, now.getDate());
+							}
 							break;
 					}
-
 
 				}
 
 				formattedString = targetDate.toLocaleString('en-US'); // MM/DD/YYYY
 				event.parsedText = event.parsedText.replace(match[0], formattedString);
 
-				this.event.parsedDates.push({
+				event.parsedDates.push({
 					index: preConvertedString.indexOf(match[0]),
 					match: match[0],
 					formattedDate: formattedString,
