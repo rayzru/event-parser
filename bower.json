@@ -1,6 +1,6 @@
 {
   "name": "event-parser.js",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Natural-language event parser for Javascript.",
   "main": "event-parser.js",
   "authors": [
@@ -35,8 +35,5 @@
     "Moment.js.nuspec",
     "package.js",
     "package.json"
-  ],
-  "dependencies": {
-    "moment": "momentjs#^2.12.0"
-  }
+  ]
 }
