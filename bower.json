@@ -1,6 +1,6 @@
 {
   "name": "event-parser.js",
-	"version": "0.0.2",
+  "version": "0.0.2",
   "description": "Natural-language event parser for Javascript.",
   "main": "event-parser.js",
   "authors": [
@@ -20,9 +20,23 @@
   ],
   "ignore": [
     "**/.*",
-    "node_modules",
+    "benchmarks",
     "bower_components",
+    "meteor",
+    "node_modules",
+    "scripts",
+    "tasks",
     "test",
-    "tests"
-  ]
+    "component.json",
+    "composer.json",
+    "CONTRIBUTING.md",
+    "ender.js",
+    "Gruntfile.js",
+    "Moment.js.nuspec",
+    "package.js",
+    "package.json"
+  ],
+  "dependencies": {
+    "moment": "momentjs#^2.12.0"
+  }
 }
