@@ -148,9 +148,8 @@
 					'\\b(?:tenth|twentieth|thirtieth)' +
 					'\\b', 'gi'),
 				normal: new RegExp(
-					'(?:\\b(' + this.sets.number.prefix.join('|') + '(?:-| ))?\\b(' + this.sets.number.normal.join('|') + '))|' +
-					'\\b(' + this.sets.number.prefix.join('|') + ')' +
-					'\\b', 'gi')
+					'((?:(?:(?:' + this.sets.number.prefix.join('|') + ')(?:-|\\s))?(' + this.sets.number.normal.join('|') + '))|' +
+					'(?:ten|' + this.sets.number.prefix.join('|') + '))', 'gi')
 			},
 			// dates detectors
 			dates: {
@@ -163,15 +162,14 @@
 				dmyStrings: /(?:(\d{1,2}(?:\s)?(?:|th|st|nd|rd)?)\b(?:\sof\s)?\s?(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:\s?,)?(?:\s?of\s?)?(20\d{2}|\d{2}[6-9]\d+))?)/gi,
 
 				// relative closest dates aliases
-				// on friday, on other friday, at monday, at next monday, tommorow, today, at 2nd tuesday
+				// on friday, on other friday, at monday, at next monday, tomorrow, today, at 2nd tuesday
 				relative: {
 
-					// todo: there is a problem, capturing single relatives with 1 space before.
 					common: /(?:(?:on|at|to)\s)?(?:(next|this|last|after|other|\d(?:st|nd|rd|th)?)\s)?(today|tomorrow|month|week|year|sunday|monday|tuesday|wednesday|thursday|friday|saturday)/ig,
 
 					// not common usages
 					dayAfter: /(\bday\safter\stomorrow\b)/ig,
-					in: /\bin\s(\d+)?(day|month|week|year)s?\b/ig
+					in: /(in\b\s(?:a\s)?(couple|(?:\d+)|(?:\b(?:twenty|thirty(?:-| ))?\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen))|(?:twenty|thirty))?(?:\s)?(?:of\s)?(day|week|month|year)(?:s)?)/ig
 				},
 				// date ranges
 				// from - to, in between
@@ -439,8 +437,6 @@
 				event.isValidDate = true;
 				match = matches.filter(filterUndefined);
 
-				// this is actially a tweak, allowing get more matches like matchAll.
-				// todo: get clear view of matchAll
 				this.patterns.dates.mdyStrings.lastIndex = matches.index + 1;
 
 				// changing to MM/DD || MM/DD/YYYY
@@ -493,17 +489,16 @@
 				});
 			}
 
-			// swap 2 parsed dates in incremental date  order.
-			// todo: this should sort whole array (in case there is more than 2 elements)
-			if (event.parsedDates.length == 2 && (this.event.parsedDates[0].dt < this.event.parsedDates[1].dt))
-				event.parsedDates.swap(0, 1);
+			// sort parsed dates in incremental order.
+			event.parsedDates.sort(function (a, b) {
+				return (a.dt < b.dt) ? -1 : (a.dt > b.dt) ? 1 : 0;
+			});
 
 			return event;
 		},
 
 		parseTimes: function (event) {
 			var hours, minutes, meridian, match, matches;
-
 
 			while (matches = this.patterns.times.singleInstances.exec(this.event.parsedText)) {
 				//if (this.patterns.dates.singleInstances.lastIndex) console.log(this.patterns.dates.singleInstances.lastIndex);
@@ -576,16 +571,8 @@
 				// months
 				if (this.sets.month.indexOf(match[relPrefix.subjectIndex]) > 0) {
 
-					/// need cases
 					var subjectMonth = this.sets.month.indexOf(match[relPrefix.subjectIndex]) + 1;
-
 					targetDate = this.getNextMonth(now, subjectMonth, relPrefix);
-
-				} else if (false) {
-
-					// parse uncommon relative date instances
-					// todo: in n days, day after tomorrow
-					// !!!!!!!!!
 
 				} else {
 
@@ -634,6 +621,55 @@
 					}
 				});
 			}
+
+
+			// Day after tomorrow (should be only one mention, ok?)
+			if (matches = event.parsedText.match(this.patterns.dates.relative.dayAfter)) {
+
+				targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth(), now.getDate() + 2);
+				formattedString = targetDate.toLocaleString('en-US'); // MM/DD/YYYY
+				event.parsedText = event.parsedText.replace(matches[0], formattedString);
+
+				this.event.parsedDates.push({
+					index: preConvertedString.indexOf(matches[0]),
+					match: match[0],
+					formattedDate: formattedString,
+					date: {
+						month: targetDate.getMonth(),
+						date: targetDate.getDate(),
+						year: targetDate.getFullYear()
+					}
+				});
+			}
+
+			if (matches = event.parsedText.match(this.patterns.dates.relative.in)) {
+
+				match = matches.filter(this.helpers.isUndefined);
+
+				if (match.length == 2) {
+					targetDate = this.helpers.getDateShifted(now, match[1], 1);
+
+				} else if (match.length == 3) {
+
+
+					targetDate = this.helpers.getDateShifted(now, match[1], 1);
+				}
+
+				formattedString = targetDate.toLocaleString('en-US'); // MM/DD/YYYY
+				event.parsedText = event.parsedText.replace(matches[0], formattedString);
+
+				this.event.parsedDates.push({
+					index: preConvertedString.indexOf(matches[0]),
+					match: match[0],
+					formattedDate: formattedString,
+					date: {
+						month: targetDate.getMonth(),
+						date: targetDate.getDate(),
+						year: targetDate.getFullYear()
+					}
+				});
+			}
+
 
 		},
 
@@ -855,9 +891,53 @@
 				return number + (s[(v - 20) % 10] || s[v] || s[0]);
 			},
 
+			strToNumber: function (string) {
+
+				if (this.patterns.numbers.normal.test(string)) {
+					var parts, number;
+					//var matches = this.patterns.numbers.normal.exec(string);
+
+					parts = string.split(/\s|-/g);
+
+					if (parts.length = 2) {
+						number = (this.sets.number.prefix.indexOf(parts[0]) + 1) + ""
+							+ this.sets.number.normal.indexOf(parts[0]) + 1;
+					} else {
+						if (this.sets.number.normal.indexOf(parts[0]) > 0) {
+							number = this.sets.number.normal.indexOf(parts[0]) + 1;
+						} else {
+							number = (['ten', 'twenty', 'thirty'].indexOf(parts[0]) + 1) * 10;
+						}
+					}
+
+					return number;
+
+				} else {
+					return false;
+				}
+
+			},
+
 			setDayStart: function (dt) {
 				dt = dt || this.now || new Date();
 				return dt.setHours(0, 0, 0, 0);
+			},
+
+			getDateShifted: function (dt, dateModifier, amount) {
+
+				amount = amount || 1;
+
+				switch (dateModifier) {
+					case "day":
+						return new Date().setFullYear(dt.getFullYear(), dt.getNextMonth(), dt.getDate() + amount);
+					case "week":
+						return new Date().setFullYear(dt.getFullYear(), dt.getNextMonth(), dt.getDate() + (7 * amount));
+					case "month":
+						return new Date().setFullYear(dt.getFullYear(), dt.getNextMonth() + amount, dt.getDate());
+					case "year":
+						return new Date().setFullYear(dt.getFullYear() + amount, dt.getNextMonth(), dt.getDate());
+				}
+
 			},
 
 			getNextMonth: function (dt, targetMonth, relativeStates) {
