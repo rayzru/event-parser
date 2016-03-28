@@ -1,7 +1,7 @@
 /*
  * Event Parser
  * @author Andrew "RayZ" Rumm
- * @version 0.1
+ * @version {@ver}
  *
  * */
 
@@ -178,17 +178,19 @@
 
 					// not common usages
 					dayAfter: /(\bday\safter\stomorrow\b)/ig,
-					in: /(in\b\s(?:a\s)?(couple|(?:\d+)|(?:\b(?:twenty|thirty(?:-| ))?\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen))|(?:twenty|thirty))?(?:\s)?(?:of\s)?(day|week|month|year)(?:s)?)/ig
+					in: /(?:in\b\s(?:a\s)?(couple|(?:\d+)|(?:\b(?:twenty|thirty(?:-|\s))?\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen))|(?:twenty|thirty))?(?:\s)?(?:of\s)?(day|week|month|year)(?:s)?)/ig
 				},
 				// date ranges
 				// from - to, in between
+				// todo make ranges parsable?
 				ranges: /s/ig
 
 			},
 
 			// todo: add AT, ON in front of detection block
 			times: {
-				singleInstances: /(?:at|on)?(\d{1,2})(?:\:)(\d{2})(?:\s)?(am|pm)?|(\d{1,2})(?:\s)?(am|pm)/gi,
+				//singleInstances: /(?:at|on)?(\d{1,2})(?:\:)(\d{2})(?:\s)?(am|pm)?|(\d{1,2})(?:\s)?(am|pm)/gi,
+				singleInstances: /(?:(?:at|on)?(\d{1,2})(?:(?:\:)(\d{2}))(?:(?:\s)?(am|pm))?|(\d{1,2})(?:\s)?(am|pm))/gi,
 				fullRanges: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?:\:)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?::)(\\d{2}))', 'gi'),
 				partialX2Time: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\d{1,2})(?:\:)(\d{2}))\s?(?:' + this.sets.range.splitter.join('|') + ')\s?((\d{1,2})(?:\:)(\d{2}))', 'gi'),
 				partialTime2X: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\d{1,2})(?:\:)(\d{2}))\s?(?:' + this.sets.range.splitter.join('|') + ')\s?((\d{1,2})(?:\:)(\d{2}))', 'gi'),
@@ -211,7 +213,7 @@
 				[/(\btom(?:orrow)?\b)/i, 'tomorrow'],
 
 				//aliases
-				[/\b(noon)\b/i, '12:00'],
+				[/(?:\b)(noon)(?:\b)/i, '12:00'],
 				[/\b(midnight)\b/i, '24:00'], // depends on needs?
 
 				// weekdays
@@ -341,7 +343,7 @@
 
 		parseRecurrent: function (event) {
 
-			var match, re;
+			var match, matches;
 
 			event.isRecurrent = false;
 			event.recurrenceText = "";
@@ -426,10 +428,11 @@
 							subjectIndex = 2;
 							hasNumber = parseInt(found[0]);
 						} else {
-							console.warn('Unexpected value: ', matches[1]);
+							//console.warn('Unexpected value: ', matches[1]);
 						}
 						break;
 				}
+				subjectIndex = 2;
 			} else {
 				subjectIndex = 1;
 			}
@@ -449,13 +452,12 @@
 
 		parseDates: function (event) {
 			var match, matches, formattedString;
-			var parsedDates = [];
-
+			var now = this.getNow();
 			// M D Y
 			this.patterns.dates.mdyStrings.lastIndex = 0;
 			while (matches = this.patterns.dates.mdyStrings.exec(event.parsedText)) {
 				event.isValidDate = true;
-				match = matches.filter(filterUndefined);
+				match = matches.filter(this.helpers.isUndefined);
 
 				this.patterns.dates.mdyStrings.lastIndex = matches.index + 1;
 
@@ -469,6 +471,8 @@
 						index: matches.index,
 						match: match[0],
 						formattedDate: formattedString,
+						hasYear: match.length == 4,
+						dt: (match.length == 4) ? new Date(match[3], this.sets.month.indexOf(match[1]) + 1, match[2]) : new Date(now.getFullYear(), this.sets.month.indexOf(match[1]) + 1, match[2]),
 						date: {
 							month: (this.sets.month.indexOf(match[1]) + 1),
 							date: parseInt(match[2]),
@@ -485,7 +489,7 @@
 
 				event.isValidDate = true;
 
-				match = matches.filter(filterUndefined);
+				match = matches.filter(this.helpers.isUndefined);
 				this.patterns.dates.dmyStrings.lastIndex = matches.index + 1;
 
 				// changing to MM/DD || MM/DD/YYYY
@@ -500,7 +504,7 @@
 					match: match[0],
 					formattedDate: formattedString,
 					hasYear: match.length == 4,
-					dt: (match.length == 4) ? new Date().setFullYear(match[3], this.sets.month.indexOf(match[2]) + 1, match[1]) : new Date().setMonth(this.sets.month.indexOf(match[2]) + 1, match[1]),
+					dt: (match.length == 4) ? new Date(match[3], this.sets.month.indexOf(match[2]) + 1, match[1]) : new Date(now.getFullYear(), this.sets.month.indexOf(match[2]) + 1, match[1]),
 					date: {
 						month: (this.sets.month.indexOf(match[2]) + 1),
 						date: parseInt(match[1]),
@@ -548,7 +552,7 @@
 						hasMeridian: meridian || false,
 						match: match[0],
 						formattedTime: formattedString,
-						dt: new Date().setHours(hours, minutes),
+						dt: new Date(0,0,0,hours, minutes),
 						time: {
 							hours: hours,
 							minutes: minutes
@@ -561,20 +565,22 @@
 		},
 
 		parseRelativeDates: function (event) {
-			var matches, match, targetDate, date, month, year, formattedString;
+			//console.log('parsing: ', event.parsedText);
+			var matches, match, targetDate, formattedString, relPrefix, relSuffix;
 
 			var now = this.getNow();
 
 			// Convert common relative dates given
 			while (matches = this.patterns.dates.relative.common.exec(event.parsedText)) {
 
+				formattedString = undefined;
 				event.isValidDate = true;
 
 				match = matches.filter(this.helpers.isUndefined);
 				this.patterns.dates.relative.common.lastIndex = matches.index + 1;
 
-				var relPrefix = this.parseRelPrefix(match);
-				var relSuffix = this.parseRelSuffix(match);
+				relPrefix = this.parseRelPrefix(match);
+				//relSuffix = this.parseRelSuffix(match);
 
 				//
 				// todo: if relative date relates to today, should check time. if it already passed, check next relative.
@@ -593,7 +599,7 @@
 					// single
 					switch (match[relPrefix.subjectIndex]) {
 						case 'tomorrow':
-							targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+							targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
 							break;
 						case 'today':
 							// today
@@ -604,6 +610,10 @@
 								// same as tomorrow
 								// at next day
 								targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth(), now.getDate());
+
+							} else if (relPrefix.last) {
+								//console.log('got last');
+
 
 							} else if (relPrefix.number) {
 								// at Nth day
@@ -618,6 +628,20 @@
 						case 'month':
 							if (relPrefix.next) {
 								targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth() + 1, now.getDate());
+								formattedString = this.sets.month[now.getMonth() + 1];
+								event.parsedText = event.parsedText.replace(match[0], formattedString);
+								event = this.parseDates(event);
+
+								//start parse from beginning
+								this.patterns.dates.relative.common.lastIndex = 0;
+							} else if (relPrefix.self) {
+								targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth(), now.getDate());
+								formattedString = this.sets.month[now.getMonth()];
+								event.parsedText = event.parsedText.replace(match[0], formattedString);
+								event = this.parseDates(event);
+
+								//start parse from beginning
+								this.patterns.dates.relative.common.lastIndex = 0;
 							}
 							break;
 						case 'year':
@@ -626,27 +650,29 @@
 							}
 							break;
 						default:
-							console.log('wat?');
+							//console.log('wat?');
 							break;
-
 					}
-
 				}
 
-				formattedString = targetDate.toLocaleString('en-US'); // MM/DD/YYYY
-				event.parsedText = event.parsedText.replace(match[0], formattedString);
+				if (!formattedString) {
+					formattedString = (targetDate.getMonth() + 1) + '/' + targetDate.getDate() + '/' + targetDate.getFullYear(); // MM/DD/YYYY
+					event.parsedText = event.parsedText.replace(match[0], formattedString);
 
-				console.log(targetDate, event);
-				event.parsedDates.push({
-					index: event.preConvertedString.indexOf(match[0]),
-					match: match[0],
-					formattedDate: formattedString,
-					date: {
-						month: targetDate.getMonth(),
-						date: targetDate.getDate(),
-						year: targetDate.getFullYear()
-					}
-				});
+					event.parsedDates.push({
+						index: event.preConvertedString.indexOf(match[0]),
+						match: match[0],
+						formattedDate: formattedString,
+						dt: new Date(targetDate),
+						date: {
+							month: targetDate.getMonth(),
+							date: targetDate.getDate(),
+							year: targetDate.getFullYear()
+						}
+					});
+				}
+
+				//console.log(targetDate, event);
 
 				return event;
 			}
@@ -655,14 +681,16 @@
 			// Day after tomorrow (should be only one mention, ok?)
 			if (matches = event.parsedText.match(this.patterns.dates.relative.dayAfter)) {
 
-				targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth(), now.getDate() + 2);
-				formattedString = targetDate.toLocaleString('en-US'); // MM/DD/YYYY
+				targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
+				formattedString = targetDate.getMonth()  + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
+
 				event.parsedText = event.parsedText.replace(matches[0], formattedString);
 
 				event.parsedDates.push({
 					index: event.preConvertedString.indexOf(matches[0]),
 					match: match[0],
 					formattedDate: formattedString,
+					dt: new Date(targetDate),
 					date: {
 						month: targetDate.getMonth(),
 						date: targetDate.getDate(),
@@ -671,7 +699,7 @@
 				});
 			}
 
-			if (matches = event.parsedText.match(this.patterns.dates.relative.in)) {
+			while (matches = this.patterns.dates.relative.in.exec(event.parsedText)) {
 
 				match = matches.filter(this.helpers.isUndefined);
 
@@ -681,13 +709,16 @@
 					targetDate = this.helpers.getDateShifted(now, match[2], match[1]);
 				}
 
-				formattedString = targetDate.toLocaleString('en-US'); // MM/DD/YYYY
+
+				formattedString = targetDate.getMonth()  + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
+
 				event.parsedText = event.parsedText.replace(matches[0], formattedString);
 
 				event.parsedDates.push({
 					index: event.preConvertedString.indexOf(matches[0]),
 					match: match[0],
 					formattedDate: formattedString,
+					dt: new Date(targetDate),
 					date: {
 						month: targetDate.getMonth(),
 						date: targetDate.getDate(),
@@ -703,16 +734,12 @@
 
 			if (!source) throw "Nothng to parse";
 
-			var match, matches, formattedString;
-
-			var hasMeridian = false,
-				meridian;
-
-			var date, month, year, hour, min, tmpDate;
+			var matches;
 
 			// store preformatted sting to store date index positions
 
-			var event = this.eventTemplate;
+			var event = this.helpers.extend({},this.eventTemplate);
+			this.event = event;
 
 			event.parsedText = source;
 			event.parsedText = this.cleanup(event.parsedText);
@@ -747,7 +774,7 @@
 			// todo: figure it out.
 			if (false || event.parsedTimes.length == 411111) {
 				while (matches = this.patterns.times.fullRanges.exec(event.parsedText)) {
-					console.log('time full ranges');
+					//console.log('time full ranges');
 				}
 			}
 
@@ -755,11 +782,11 @@
 			if (event.parsedTimes.length == 1) {
 
 				while (matches = this.patterns.times.partialX2Time.exec(event.parsedText)) {
-					console.log('time partial ranges');
+					//console.log('time partial ranges');
 				}
 
 				while (matches = this.patterns.times.partialTime2X.exec(event.parsedText)) {
-					console.log('time partial ranges');
+					//console.log('time partial ranges');
 				}
 			}
 
@@ -772,7 +799,6 @@
 			// Finalize dates, make ajustements
 			// ================================
 
-			//
 			if (!event.startDate) {
 
 				if (event.parsedDates.length) {
@@ -780,8 +806,39 @@
 					if (event.parsedTimes.length) {
 						// has times
 						if (event.parsedTimes.length == 1) {
+							event.startDate =
+								new Date(
+									event.parsedDates[0].dt.getFullYear(),
+									event.parsedDates[0].dt.getMonth(),
+									event.parsedDates[0].dt.getDate(),
+									event.parsedTimes[0].dt.getHours(),
+									event.parsedTimes[0].dt.getMinutes(), 0, 0
+								);
+
+							if (event.parsedDates.length == 2) {
+								//console.log('one time, two dates');
+							}
 
 						} else if (event.parsedTimes.length == 2) {
+							if (event.parsedDates.length == 1) {
+								event.startDate =
+									new Date(
+										event.parsedDates[0].dt.getFullYear(),
+										event.parsedDates[0].dt.getMonth(),
+										event.parsedDates[0].dt.getDate(),
+										event.parsedTimes[0].dt.getHours(),
+										event.parsedTimes[0].dt.getMinutes(), 0, 0
+									);
+
+								event.endDate =
+									new Date(
+										event.parsedDates[0].dt.getFullYear(),
+										event.parsedDates[0].dt.getMonth(),
+										event.parsedDates[0].dt.getDate(),
+										event.parsedTimes[1].dt.getHours(),
+										event.parsedTimes[1].dt.getMinutes(), 0, 0
+									);
+							}
 
 						}
 					} else {
@@ -813,7 +870,7 @@
 						event.startDate =
 							new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), 0, 0);
 
-						console.info('No dates and times detected');
+						//console.info('No dates and times detected');
 						event.isValidDate = false;
 					}
 				}
@@ -941,13 +998,13 @@
 
 				switch (dateModifier) {
 					case "day":
-						return new Date().setFullYear(dt.getFullYear(), dt.getNextMonth(), dt.getDate() + amount);
+						return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + amount);
 					case "week":
-						return new Date().setFullYear(dt.getFullYear(), dt.getNextMonth(), dt.getDate() + (7 * amount));
+						return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + (7 * amount));
 					case "month":
-						return new Date().setFullYear(dt.getFullYear(), dt.getNextMonth() + amount, dt.getDate());
+						return new Date(dt.getFullYear(), dt.getMonth() + amount, dt.getDate());
 					case "year":
-						return new Date().setFullYear(dt.getFullYear() + amount, dt.getNextMonth(), dt.getDate());
+						return new Date(dt.getFullYear() + amount, dt.getMonth(), dt.getDate());
 				}
 
 			},
@@ -996,7 +1053,7 @@
 					daysUntilNext = (relativeStates.number > 1) ? daysUntilNext + (7 * relativeStates.number) : daysUntilNext;
 				}
 
-				return new Date().setDate(dt.getDate() + daysUntilNext);
+				return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + daysUntilNext);
 
 			},
 
