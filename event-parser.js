@@ -37,7 +37,7 @@
 		if (typeof config === "string") {
 			this.parse(config);
 		} else if (typeof config === "object") {
-			this.settings = this.apply(this.defaults, config);
+			this.settings = this.helpers.extend({}, this.defaults, config);
 		}
 
 		// Avoid clobbering the window scope
@@ -135,12 +135,12 @@
 			//recurrenceExpression: /(((?:at|on)?((every|each)?(?:\s)?((?:(\d+)(?:st|nd|rd|th))|first|next|last|other)?)(?:\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|((every|each)\s+?(?:other|last|first|next)?\s?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)|(weekday|weekend|week|month|day|year)))|((sunday|monday|tuesday|wednesday|thursday|friday|saturday)s|(dai|week|month|year)ly|weekends|weekdays))/gi,
 			recurrenceExpression: /((?:at|on)\s)?(((every|each)\s)?((((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|((january|february|march|april|may|june|july|august|september|october|november|december)(?:\s)?(?:,|and|&)?\s?){2,}))|((every|each)\s(((?:((?:(twenty|thirty(?:-|\s))?(first|second|third|fourth|fifth|sixth|seventh|eighth|nineth|tenth|eleventh|twelfth|thirteenth|fourteenth|fifteenth|sixteenth|seventeenth|eighteenth|nineteenth))|(?:tenth|twentieth|thirtieth))|(\d+)(?:st|nd|rd|th))|next|last|other)?\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?|(january|february|march|april|may|june|july|august|september|october|november|december)|(weekday|weekend|week|month|day|year)))|(dai|week|month|year)ly|weekends|weekdays/gi,
 			/*recurrenceExpression: new RegExp('' +
-				'((?:at|on)\\s)?' +
-				'?(((every|each)\\s)?' +
-				'((' +
-				'((' + this.sets.weekday.join('|') + ')(?:s)?(?:\\s)?(?:,|and|&)\\s){2,})|' +
-				'((' + this.sets.month.join('|') + ')?(?:\\s)?(?:,|and|&)\\s){2,}))|' +
-				'', 'gi')*/
+			 '((?:at|on)\\s)?' +
+			 '?(((every|each)\\s)?' +
+			 '((' +
+			 '((' + this.sets.weekday.join('|') + ')(?:s)?(?:\\s)?(?:,|and|&)\\s){2,})|' +
+			 '((' + this.sets.month.join('|') + ')?(?:\\s)?(?:,|and|&)\\s){2,}))|' +
+			 '', 'gi')*/
 
 			/*recurrenceTimes:
 			 new RegExp(
@@ -385,21 +385,21 @@
 
 				/*if (match = /(every|each)/i.exec(event.recurrenceText)) {
 
-					// if every then untill forever
-					event.until = "";
-					event.recurrenceText = event.recurrenceText.replace(match[0], '');
+				 // if every then untill forever
+				 event.until = "";
+				 event.recurrenceText = event.recurrenceText.replace(match[0], '');
 
-					// weekdays
-					re = new RegExp(this.sets.weekday.join('|'), 'ig');
-					while (match = re.exec(event.recurrenceText)) {
-						event.frequency = 'weekly';
-						event.recurrentAttr.push({day: this.sets.weekday.indexOf(match[0])})
-					}
+				 // weekdays
+				 re = new RegExp(this.sets.weekday.join('|'), 'ig');
+				 while (match = re.exec(event.recurrenceText)) {
+				 event.frequency = 'weekly';
+				 event.recurrentAttr.push({day: this.sets.weekday.indexOf(match[0])})
+				 }
 
-				} else {
+				 } else {
 
 
-				}*/
+				 }*/
 
 			}
 
@@ -556,7 +556,7 @@
 						hasMeridian: meridian || false,
 						match: match[0],
 						formattedTime: formattedString,
-						dt: new Date(0,0,0,hours, minutes),
+						dt: new Date(0, 0, 0, hours, minutes),
 						time: {
 							hours: hours,
 							minutes: minutes
@@ -686,7 +686,7 @@
 			if (matches = event.parsedText.match(this.patterns.dates.relative.dayAfter)) {
 
 				targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
-				formattedString = targetDate.getMonth()  + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
+				formattedString = targetDate.getMonth() + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
 
 				event.parsedText = event.parsedText.replace(matches[0], formattedString);
 
@@ -714,7 +714,7 @@
 				}
 
 
-				formattedString = targetDate.getMonth()  + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
+				formattedString = targetDate.getMonth() + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
 
 				event.parsedText = event.parsedText.replace(matches[0], formattedString);
 
@@ -742,8 +742,9 @@
 
 			// store preformatted sting to store date index positions
 
-			var event = this.helpers.extend({},this.eventTemplate);
-			this.event = event;
+			var event = JSON.parse(JSON.stringify(this.eventTemplate));
+				//new Object(); //= extend({}, this.eventTemplate);
+			//this.event = event;
 
 			event.parsedText = source;
 			event.parsedText = this.cleanup(event.parsedText);
@@ -848,6 +849,14 @@
 
 						}
 					} else {
+						event.startDate =
+							new Date(
+								event.parsedDates[0].dt.getFullYear(),
+								event.parsedDates[0].dt.getMonth(),
+								event.parsedDates[0].dt.getDate(),
+								now.getHours(),
+								now.getMinutes(), 0, 0
+							);
 						event.allDay = true;
 					}
 
@@ -883,9 +892,14 @@
 
 			}
 
-			this.event = event;
 
-			return this;
+			return {
+				title: event.parsedTitle,
+				startDate: (event.startDate) ? new Date(event.startDate) : null,
+				endDate: (event.endDate) ? new Date(event.endDate) : null,
+				allDay: event.allDay,
+				Recurrencies: event.parsedRecurrencies
+			};
 		},
 
 
@@ -899,14 +913,15 @@
 				title: this.event.parsedTitle,
 				startDate: (this.event.startDate) ? new Date(this.event.startDate) : null,
 				endDate: (this.event.endDate) ? new Date(this.event.endDate) : null,
-				allDay: this.event.allDay
+				allDay: this.event.allDay,
+				Recurrencies: this.event.parsedRecurrencies
 			};
 		},
 
 		// curago object wrapper
 		getEventCurago: function () {
 
-			var collectedDate = this.helpers.extend({}, this.curagoEventTemplate, {
+			var collectedDate = extend({}, this.curagoEventTemplate, {
 				title: this.event.parsedText || "",
 				starts_at: new Date(this.event.startDate).toISOString() || null,
 				ends_at: new Date(this.event.endDate).toISOString() || null,
@@ -932,7 +947,6 @@
 							arguments[0][key] = arguments[i][key];
 				return arguments[0];
 			},
-
 
 			isUndefined: function (el) {
 				return el != undefined;
