@@ -15,9 +15,9 @@ Event Parser
 ###Usage
 
 ```javascript
-var event = new EventParser("Have fun with Jane at home on 11th dec");
+var event = new EventParser();
 
-console.log(event.parse().getEvent());
+console.log(event.parse("Have fun with Jane at home on 11th dec"));
 ```
 
 ```javascript
