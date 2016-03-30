@@ -1,18 +1,15 @@
 /*
  * Event Parser
+ * Natural Language Processing library for parsing event-related text into event object.
  * @author Andrew "RayZ" Rumm
- * @version {@ver}
  *
- * */
-
-
-/*
+ *
  * The way it works:
  * 1) convert all known shortens on to full word representations: dec->december, nov->november
  * 2) convert all times into 24hour-format
  * 3) interpret all related dates and times into real one
- * 4) parse and remove recurrent parts from source string for futurer parses. parse and get exceptions.
- * 5)
+ * 4) parse and remove recurrent parts from source string for futurer parses. Parse and get exceptions.
+ * work is not finished yet
  *
  * */
 
