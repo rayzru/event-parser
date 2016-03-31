@@ -264,15 +264,6 @@
 			return (this.now) ? new Date(this.now.getTime()) : new Date();
 		},
 
-		// apply new settings into existing configuration
-		apply: function (settings) {
-			this.settings = this.helpers.extend({}, this.settings, settings);
-		},
-
-		formatStrDate: function (date, month, year) {
-
-		},
-
 		cleanup: function (source) {
 			var formattedString, match, matches;
 
@@ -448,7 +439,7 @@
 		},
 
 		parseRelSuffix: function (matches) {
-
+			//
 		},
 
 		parseDates: function (event) {
@@ -990,10 +981,6 @@
 
 			},
 
-			setDayStart: function (dt) {
-				dt = dt || this.now || new Date();
-				return dt.setHours(0, 0, 0, 0);
-			},
 
 			getDateShifted: function (dt, dateModifier, amount) {
 
@@ -1086,17 +1073,3 @@
 	window.EventParser = EventParser;
 
 })();
-
-// object helper, merge objects into one single
-Array.prototype.swap = function (x, y) {
-	var b = this[x];
-	this[x] = this[y];
-	this[y] = b;
-	return this;
-};
-
-if (!String.prototype.trim) {
-	String.prototype.trim = function () {
-		return this.replace(/^\s+|\s+$/g, '');
-	};
-}
