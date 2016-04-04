@@ -3,7 +3,6 @@
  * Natural Language Processing library for parsing event-related text into event object.
  * @author Andrew "RayZ" Rumm
  *
- *
  * The way it works:
  * 1) convert all known shortens on to full word representations: dec->december, nov->november
  * 2) convert all times into 24hour-format
@@ -24,7 +23,7 @@
 			weekStart: 'sunday' // monday|sunday;
 		};
 
-		this.now = moment();
+		this.now = this.getNow();
 
 		// data object
 		this.event = {};
@@ -464,7 +463,7 @@
 						match: match[0],
 						formattedDate: formattedString,
 						hasYear: match.length == 4,
-						dt: (match.length == 4) ? new Date(match[3], this.sets.month.indexOf(match[1]) + 1, match[2]) : new Date(now.getFullYear(), this.sets.month.indexOf(match[1]) + 1, match[2]),
+						dt: (match.length == 4) ? new Date(match[3], this.sets.month.indexOf(match[1]), match[2]) : new Date(now.getFullYear(), this.sets.month.indexOf(match[1]), match[2]),
 						date: {
 							month: (this.sets.month.indexOf(match[1]) + 1),
 							date: parseInt(match[2]),
@@ -496,7 +495,7 @@
 					match: match[0],
 					formattedDate: formattedString,
 					hasYear: match.length == 4,
-					dt: (match.length == 4) ? new Date(match[3], this.sets.month.indexOf(match[2]) + 1, match[1]) : new Date(now.getFullYear(), this.sets.month.indexOf(match[2]) + 1, match[1]),
+					dt: (match.length == 4) ? new Date(match[3], this.sets.month.indexOf(match[2]), match[1]) : new Date(now.getFullYear(), this.sets.month.indexOf(match[2]), match[1]),
 					date: {
 						month: (this.sets.month.indexOf(match[2]) + 1),
 						date: parseInt(match[1]),
@@ -544,7 +543,6 @@
 						hasMeridian: meridian || false,
 						match: match[0],
 						formattedTime: formattedString,
-						dt: new Date(0, 0, 0, hours, minutes),
 						time: {
 							hours: hours,
 							minutes: minutes
@@ -731,7 +729,7 @@
 			// store preformatted sting to store date index positions
 
 			var event = JSON.parse(JSON.stringify(this.eventTemplate));
-				//new Object(); //= extend({}, this.eventTemplate);
+			//new Object(); //= extend({}, this.eventTemplate);
 			//this.event = event;
 
 			event.parsedText = source;
@@ -806,11 +804,11 @@
 
 						event.startDate =
 							new Date(
-								event.parsedDates[0].dt.getFullYear(),
-								event.parsedDates[0].dt.getMonth(),
-								event.parsedDates[0].dt.getDate(),
-								event.parsedTimes[0].dt.getHours(),
-								event.parsedTimes[0].dt.getMinutes(), 0, 0
+								(event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : now.getFullYear(),
+								event.parsedDates[0].date.month,
+								event.parsedDates[0].date.date,
+								event.parsedTimes[0].time.hours,
+								event.parsedTimes[0].time.minutes, 0, 0
 							);
 
 
@@ -818,20 +816,20 @@
 							if (event.parsedDates.length == 1) {
 								event.endDate =
 									new Date(
-										event.parsedDates[0].dt.getFullYear(),
-										event.parsedDates[0].dt.getMonth(),
-										event.parsedDates[0].dt.getDate(),
-										event.parsedTimes[1].dt.getHours(),
-										event.parsedTimes[1].dt.getMinutes(), 0, 0
+										(event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : now.getFullYear(),
+										event.parsedDates[0].date.month,
+										event.parsedDates[0].date.date,
+										event.parsedTimes[1].time.hours,
+										event.parsedTimes[1].time.minutes, 0, 0
 									);
 							} else if (event.parsedDates.length == 2) {
 								event.endDate =
 									new Date(
-										event.parsedDates[1].dt.getFullYear(),
-										event.parsedDates[1].dt.getMonth(),
-										event.parsedDates[1].dt.getDate(),
-										event.parsedTimes[1].dt.getHours(),
-										event.parsedTimes[1].dt.getMinutes(), 0, 0
+										(event.parsedDates[1].hasYear) ? event.parsedDates[1].date.year : now.getFullYear(),
+										event.parsedDates[1].date.month,
+										event.parsedDates[1].date.date,
+										event.parsedTimes[1].time.hours,
+										event.parsedTimes[1].time.minutes, 0, 0
 									);
 							}
 
@@ -839,13 +837,14 @@
 					} else {
 						event.startDate =
 							new Date(
-								event.parsedDates[0].dt.getFullYear(),
-								event.parsedDates[0].dt.getMonth(),
-								event.parsedDates[0].dt.getDate(),
-								now.getHours(),
-								now.getMinutes(), 0, 0
+								(event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : now.getFullYear(),
+								event.parsedDates[0].date.month,
+								event.parsedDates[0].date.date,
+								0, 0, 0, 0
 							);
-						event.allDay = true;
+
+							event.allDay = true;
+
 					}
 
 				} else {
@@ -855,14 +854,14 @@
 						// has times
 						if (event.parsedTimes.length == 1) {
 							event.startDate =
-								new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.parsedTimes[0].dt.getHours(), event.parsedTimes[0].dt.getMinutes(), 0, 0);
+								new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.parsedTimes[0].time.hours, event.parsedTimes[0].time.minutes, 0, 0);
 
 
 						} else if (event.parsedTimes.length == 2) {
 							event.startDate =
-								new Date(now.getFullYear(), now.getMonth(), now.getDate(), new Date(event.parsedTimes[0].dt).getHours(), new Date(event.parsedTimes[0].dt).getMinutes(), 0, 0);
+								new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.parsedTimes[0].time.hours, event.parsedTimes[0].time.minutes, 0, 0);
 							event.endDate =
-								new Date(now.getFullYear(), now.getMonth(), now.getDate(), new Date(event.parsedTimes[1].dt).getHours(), new Date(event.parsedTimes[1].dt).getMinutes(), 0, 0);
+								new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.parsedTimes[1].time.hours, event.parsedTimes[1].time.minutes, 0, 0);
 
 						}
 
@@ -877,47 +876,28 @@
 						event.isValidDate = false;
 					}
 				}
-
 			}
-
 
 			return {
 				title: event.parsedTitle,
-				startDate: (event.startDate) ? new Date(event.startDate) : null,
-				endDate: (event.endDate) ? new Date(event.endDate) : null,
-				allDay: event.allDay,
-				Recurrencies: event.parsedRecurrencies
-			};
-		},
-
-
-		//
-		// RETURN DATA
-		// ================================
-
-
-		getEvent: function () {
-			return {
-				title: this.event.parsedTitle,
-				startDate: (this.event.startDate) ? new Date(this.event.startDate) : null,
-				endDate: (this.event.endDate) ? new Date(this.event.endDate) : null,
-				allDay: this.event.allDay,
-				Recurrencies: this.event.parsedRecurrencies
+				startDate: (event.startDate instanceof Date) ? event.startDate.toISOString() : "",
+				endDate: (event.endDate instanceof Date) ? event.endDate.toISOString() : "",
+				allDay: event.allDay
+				// Recurrencies: event.parsedRecurrencies
 			};
 		},
 
 		// curago object wrapper
-		getEventCurago: function () {
+		getEventCurago: function (event) {
 
-			var collectedDate = extend({}, this.curagoEventTemplate, {
+			return {
 				title: this.event.parsedText || "",
-				starts_at: new Date(this.event.startDate).toISOString() || null,
-				ends_at: new Date(this.event.endDate).toISOString() || null,
-				location_name: (this.event.parsedLocations.length) ? this.event.parsedLocations[0] : ""
+				starts_at: event.startDate.toISOString() || null,
+				ends_at: event.endDate.toISOString() || null
+				//location_name: (event.parsedLocations.length) ? event.parsedLocations[0] : ""
 				//separation: this.event.setPosition
-			});
+			}
 
-			return collectedDate;
 		},
 
 
