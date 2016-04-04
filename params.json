@@ -1,6 +1,5 @@
 {
   "name": "event-parser.js",
-  "tagline": "Рarses events written in plain English, and returns an object defining a event",
+  "tagline": "Рarses events written in plain English, and returns an object defining an event",
   "body": "### Usage\r\n\r\n```javascript\r\nvar event = new EventParser();\r\nconsole.log(event.parse('today'));\r\n```\r\n\r\n",
-  "note": "Don't delete this file! It's used internally to help with page regeneration."
 }

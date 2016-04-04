@@ -1,37 +1,84 @@
 <!DOCTYPE html>
-<html lang="en-us">
-  <head>
-    <meta charset="UTF-8">
-    <title>event-parser.js</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
-    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
-  </head>
-  <body>
-    <section class="page-header">
-      <h1 class="project-name">event-parser.js</h1>
-      <h2 class="project-tagline">Рarses events written in plain English, and returns an object defining an event</h2>
-      <a href="https://github.com/rayzru/event-parser" class="btn">View on GitHub</a>
-      <a href="https://github.com/rayzru/event-parser/zipball/master" class="btn">Download .zip</a>
-      <a href="https://github.com/rayzru/event-parser/tarball/master" class="btn">Download .tar.gz</a>
-    </section>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <section class="main-content">
-      <h3>
-<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Usage</h3>
+	<title>Event Parser</title>
 
-<div class="highlight highlight-source-js"><pre><span class="pl-k">var</span> <span class="pl-c1">event</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">EventParser</span>();
-<span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-c1">event</span>.<span class="pl-c1">parse</span>(<span class="pl-s"><span class="pl-pds">'</span>today<span class="pl-pds">'</span></span>));</pre></div>
+	<link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+	<link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+	<link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
 
-      <footer class="site-footer">
-        <span class="site-footer-owner"><a href="https://github.com/rayzru/event-parser">event-parser.js</a> is maintained by <a href="https://github.com/rayzru">rayzru</a>.</span>
 
-      </footer>
+	<script src="https://code.jquery.com/jquery-2.2.2.min.js"></script>
 
-    </section>
+	<script src="event-parser.js"></script>
 
-  
-  </body>
+	<style>
+		#source {
+			width: 100%;
+			padding: 5px;
+			border:  1px solid #ccc;
+			-webkit-border-radius: 3px;
+			-moz-border-radius: 3px;
+			font-size: 26px;
+			border-radius: 3px;
+			margin-bottom: 2em;
+		}
+	</style>
+
+</head>
+<body>
+<section class="page-header">
+	<h1 class="project-name">event-parser.js</h1>
+	<h2 class="project-tagline">Рarses events written in plain English, and returns an object defining a event</h2>
+	<a href="https://github.com/rayzru/event-parser" class="btn">View on GitHub</a>
+	<a href="https://github.com/rayzru/event-parser/zipball/master" class="btn">Download .zip</a>
+	<a href="https://github.com/rayzru/event-parser/tarball/master" class="btn">Download .tar.gz</a>
+</section>
+
+<section class="main-content">
+	<h3>
+		<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true"
+																			class="octicon octicon-link"></span></a>Usage
+	</h3>
+
+	<div class="highlight highlight-source-js"><pre><span class="pl-k">var</span> <span class="pl-c1">event</span> <span
+			class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">EventParser</span>();
+<span class="pl-en">console</span>.<span class="pl-c1">log</span>(<span class="pl-c1">event</span>.<span class="pl-c1">parse</span>(<span
+				class="pl-s"><span class="pl-pds">'</span>today<span class="pl-pds">'</span></span>));</pre>
+	</div>
+
+
+	<h3>
+		<a id="test" class="anchor" href="#test" aria-hidden="true"><span aria-hidden="true"
+																			class="octicon octicon-link"></span></a>Test
+	</h3>
+
+	<div><input type="text" class="form-control" id="source" value="Pick up Dave on 6 of January at 6pm"></div>
+	<div class="highlight highlight-source-js">
+		<pre id="output"></pre>
+	</div>
+
+	<footer class="site-footer">
+		<span class="site-footer-owner"><a href="https://github.com/rayzru/event-parser">event-parser.js</a> is maintained by <a
+				href="https://github.com/rayzru">Andrew "RayZ" Rumm</a></span>
+	</footer>
+
+</section>
+
+<script>
+	jQuery(function ($) {
+		ep = new EventParser();
+		$('#source').on('keyup', function () {
+			var e = ep.parse($(this).val());
+			$('#output').text(JSON.stringify(e, undefined, 2));
+		});
+
+		$('#source').trigger('keyup');
+	});
+</script>
+</body>
 </html>
