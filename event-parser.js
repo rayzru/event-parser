@@ -879,7 +879,7 @@
 			}
 
 			return {
-				title: event.parsedTitle,
+				title: event.parsedTitle.trim(),
 				startDate: (event.startDate instanceof Date) ? event.startDate.toISOString() : "",
 				endDate: (event.endDate instanceof Date) ? event.endDate.toISOString() : "",
 				allDay: event.allDay
@@ -891,7 +891,7 @@
 		getEventCurago: function (event) {
 
 			return {
-				title: this.event.parsedText || "",
+				title: this.event.parsedText.trim() || "",
 				starts_at: event.startDate.toISOString() || null,
 				ends_at: event.endDate.toISOString() || null
 				//location_name: (event.parsedLocations.length) ? event.parsedLocations[0] : ""
