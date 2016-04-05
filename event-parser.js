@@ -882,24 +882,11 @@
 				title: event.parsedTitle.trim(),
 				startDate: (event.startDate instanceof Date) ? new Date(event.startDate) : "",
 				endDate: (event.endDate instanceof Date) ? new Date(event.endDate) : "",
-				allDay: event.allDay
+				allDay: event.allDay,
+				isRecurrent: event.isRecurrent
 				// Recurrencies: event.parsedRecurrencies
 			};
 		},
-
-		// curago object wrapper
-		getEventCurago: function (event) {
-
-			return {
-				title: this.event.parsedText.trim() || "",
-				starts_at: new Date(event.startDate) || null,
-				ends_at: new Date(event.endDate) || null
-				//location_name: (event.parsedLocations.length) ? event.parsedLocations[0] : ""
-				//separation: this.event.setPosition
-			}
-
-		},
-
 
 		//
 		// Helpers functions
