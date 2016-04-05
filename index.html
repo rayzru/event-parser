@@ -13,6 +13,7 @@
 
 
 	<script src="https://code.jquery.com/jquery-2.2.2.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.min.js"></script>
 
 	<script src="event-parser.js"></script>
 
@@ -74,6 +75,8 @@
 		ep = new EventParser();
 		$('#source').on('keyup', function () {
 			var e = ep.parse($(this).val());
+			e.startDate = (moment(e.startDate).isValid()) ? moment(e.startDate).format() : "";
+			e.endDate = (moment(e.endDate).isValid()) ? moment(e.endDate).format() : "";
 			$('#output').text(JSON.stringify(e, undefined, 2));
 		});
 
