@@ -793,7 +793,7 @@
 			event.parsedTitle = event.parsedText;
 			event.parsedTitle = event.parsedTitle.replace(this.patterns.dates.formatted, '');
 			event.parsedTitle = event.parsedTitle.replace(this.patterns.times.formatted, '');
-			//event.parsedTitle = event.parsedTitle.replace(/ +/g, ' ').trim(); // remove multiple spaces
+			event.parsedTitle = event.parsedTitle.replace(/ +(?= )/g,'').trim(); // remove multiple spaces
 
 			if (!event.startDate) {
 
