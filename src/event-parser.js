@@ -31,7 +31,7 @@
 
 		// checking given configuration
 		if (typeof config === "string") {
-			this.parse(config);
+			return this.parse(config);
 		} else if (typeof config === "object") {
 			this.settings = this.helpers.extend({}, this.defaults, config);
 		}
@@ -249,7 +249,7 @@
 			]
 		};
 
-		this.now = null;
+		//this.now = пуе;
 
 		// using one EventParser instance
 		if (!(this instanceof EventParser )) return new EventParser(this.settings);
