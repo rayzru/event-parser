@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Event Parser</title>
+
+	<script src="https://code.jquery.com/jquery-2.2.2.min.js"></script>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+		  integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+	<script type="text/javascript" src="../event-parser.js"></script>
+	<script type="text/javascript" src="../vendor/moment/min/moment.min.js"></script>
+</head>
+<body>
+<script>
+	$(function ($) {
+		//$.get('test-cases-test.txt', function (data) {
+		$.get('test-cases.txt', function (data) {
+			var tr, event,
+					ep = new EventParser(),
+					table = $('#table'),
+					format = "MMMM, Do, YYYY @ HH:mm";
+			table.append("<col width='20%' /><col width='20%' />")
+			table.append("<tr><th>Source</th><th>Title</th><th>Start date</th><th>End date</th><th>Recurrency?</th><th></th></tr>")
+
+			$.each(data.split('\r\n'), function (i, o) {
+				if (o !== "") {
+					event = ep.parse(o);
+
+					// ep.getEvent()
+
+					var row = $("<tr/>");
+					row.append("<td>" + o + "</td>");
+
+					row.append("<td>" + event.title + "</td>");
+					//row.append("<td>" + ((event.isRecurrent) ? "recurrent" : "") + "</td>");
+					//row.append("<td>" + event.recurrenceText + "</td>");
+					row.append("<td>" + moment(event.startDate).format(format) + "</td>");
+					row.append("<td>" + ((event.endDate != null) ? moment(event.endDate).format(format) : "--") + "</td>");
+
+
+					/*var dates = $("<div></div>");
+					 $.each(ep.event.parsedDates, function(index, item) { $("<div></div>").text(item.match).appendTo(dates); });
+					 row.append($('<td></td>').append(dates));*/
+
+					table.append(row);
+
+					//console.dir('Event:',event);
+				}
+			});
+		});
+	});
+</script>
+<div class="container-fluid">
+	<table id="table" class="table"></table>
+</div>
+</body>
+</html>

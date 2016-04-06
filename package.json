@@ -1,12 +1,25 @@
 {
-  "name": "Event Parser",
-  "version": "0.0.8",
+  "name": "event-parser.js",
+  "version": "0.0.8.1",
   "author": "Andrew RayZ Rumm",
   "description": "Natural-language event parser for Javascript.",
-  "main": "event-parser.js",
+  "main": "dist/event-parser.min.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/rayzru/event-parser.git"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-concat": "^2.6.0",
+    "gulp-notify": "^2.2.0",
+    "gulp-uglify": "^1.5.3",
+    "jasmine-core": "^2.4.1",
+    "karma": "^0.13.22",
+    "karma-chrome-launcher": "^0.2.3",
+    "karma-firefox-launcher": "^0.1.7",
+    "karma-jasmine": "^0.3.8",
+    "karma-requirejs": "^0.2.6",
+    "requirejs": "^2.2.0"
+  }
 }
