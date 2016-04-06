@@ -1,6 +1,6 @@
 {
   "name": "Event Parser",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "author": "Andrew RayZ Rumm",
   "description": "Natural-language event parser for Javascript.",
   "main": "event-parser.js",

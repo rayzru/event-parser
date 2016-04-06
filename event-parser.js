@@ -159,7 +159,7 @@
 			// dates detectors
 			dates: {
 
-				formatted: /((?:(?:on|at)\s)?\d{1,2}\/\d{1,2}(?:\/(?:\d{4}|\d{2}))?)/gi,
+				formatted: /(?:(?:on|at)\s)?(\d{1,2})\/(\d{1,2})(?:\/(\d{4}|\d{2}))?/gi,
 
 				// june 12, june 12th, june 12th 2001, "june 12th, of 2001"
 				// todo: add THE, AT, ON in front of detection block
@@ -172,28 +172,28 @@
 				// relative closest dates aliases
 				// on friday, on other friday, at monday, at next monday, tomorrow, today, at 2nd tuesday
 				relative: {
-
 					common: /(?:(?:on|at|to)\s)?(?:(next|this|last|after|other|\d(?:st|nd|rd|th)?)\s)?(today|tomorrow|month|week|year|sunday|monday|tuesday|wednesday|thursday|friday|saturday)/ig,
-
-					// not common usages
 					dayAfter: /(\bday\safter\stomorrow\b)/ig,
 					in: /(?:in\b\s(?:a\s)?(couple|(?:\d+)|(?:\b(?:twenty|thirty(?:-|\s))?\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen))|(?:twenty|thirty))?(?:\s)?(?:of\s)?(day|week|month|year)(?:s)?)/ig
 				},
+
 				// date ranges
 				// from - to, in between
 				// todo make ranges parsable?
-				ranges: /s/ig
-
-			},
+				ranges: {
+					from: new RegExp('((?!\\d{1,2}\\/)\\d{1,2})(?:(?:\\s)?(' + this.sets.range.splitter.join('|') + ')(?:\\s)?)(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)', 'gi'),
+					to: new RegExp('(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)(?:(?:\\s)?(' + this.sets.range.splitter.join('|') + ')(?:\\s)?)((?!\\d{1,2}\\/)\\d{1,2})', 'gi'),
+					between: /\s/ig
+	}			},
 
 			// todo: add AT, ON in front of detection block
 			times: {
 				formatted: /((?:(?:at|on)\s)?(?:\d{1,2})(?:\:)(?:\d{2}))/gi,
-				//singleInstances: /(?:at|on)?(\d{1,2})(?:\:)(\d{2})(?:\s)?(am|pm)?|(\d{1,2})(?:\s)?(am|pm)/gi,
 				singleInstances: /(?:(?:at|on)?(\d{1,2})(?:(?:\:)(\d{2}))(?:(?:\s)?(am|pm))?|(\d{1,2})(?:\s)?(am|pm))/gi,
+
 				fullRanges: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?:\:)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?::)(\\d{2}))', 'gi'),
-				partialX2Time: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\d{1,2})(?:\:)(\d{2}))\s?(?:' + this.sets.range.splitter.join('|') + ')\s?((\d{1,2})(?:\:)(\d{2}))', 'gi'),
-				partialTime2X: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\d{1,2})(?:\:)(\d{2}))\s?(?:' + this.sets.range.splitter.join('|') + ')\s?((\d{1,2})(?:\:)(\d{2}))', 'gi'),
+				partialX2Time: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?:\:)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?:\\:)(\\d{2}))', 'gi'),
+				partialTime2X: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?:\:)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?:\\:)(\\d{2}))', 'gi'),
 
 			},
 
@@ -444,6 +444,31 @@
 		parseDates: function (event) {
 			var match, matches, formattedString;
 			var now = this.getNow();
+
+			// get all well-formatted dates first
+			this.patterns.dates.formatted.lastIndex = 0;
+			while (matches = this.patterns.dates.formatted.exec(event.parsedText)) {
+				event.isValidDate = true;
+				match = matches.filter(this.helpers.isUndefined);
+
+				//this.patterns.dates.formatted.lastIndex = matches.index + 1;
+
+				formattedString = match[0];
+
+				event.parsedDates.push({
+						index: matches.index,
+						match: formattedString,
+						formattedDate: formattedString,
+						hasYear: match.length == 4,
+						date: {
+							month: parseInt(match[1]),
+							date: parseInt(match[2]),
+							year: ((match.length == 4) ? parseInt(match[3]) : undefined)
+						}
+					}
+				);
+			}
+
 			// M D Y
 			this.patterns.dates.mdyStrings.lastIndex = 0;
 			while (matches = this.patterns.dates.mdyStrings.exec(event.parsedText)) {
@@ -467,7 +492,7 @@
 						date: {
 							month: (this.sets.month.indexOf(match[1]) + 1),
 							date: parseInt(match[2]),
-							year: ((match.length == 4) ? '/' + match[3] : undefined)
+							year: ((match.length == 4) ? match[3] : undefined)
 						}
 					}
 				);
@@ -575,6 +600,7 @@
 				//
 				// todo: if relative date relates to today, should check time. if it already passed, check next relative.
 
+				// todo: DONT USE DATE OBJECT. Dates can be uncomplete if year not specified.
 
 				if (this.sets.weekday.indexOf(match[relPrefix.subjectIndex]) >= 0) {
 					// weekdays
@@ -680,7 +706,6 @@
 					index: event.preConvertedString.indexOf(matches[0]),
 					match: match[0],
 					formattedDate: formattedString,
-					dt: new Date(targetDate),
 					date: {
 						month: targetDate.getMonth(),
 						date: targetDate.getDate(),
@@ -699,7 +724,6 @@
 					targetDate = this.helpers.getDateShifted(now, match[2], match[1]);
 				}
 
-
 				formattedString = targetDate.getMonth() + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
 
 				event.parsedText = event.parsedText.replace(matches[0], formattedString);
@@ -708,13 +732,65 @@
 					index: event.preConvertedString.indexOf(matches[0]),
 					match: match[0],
 					formattedDate: formattedString,
-					dt: new Date(targetDate),
 					date: {
 						month: targetDate.getMonth(),
 						date: targetDate.getDate(),
 						year: targetDate.getFullYear()
 					}
 				});
+			}
+
+			return event;
+		},
+
+		parseDateRanges: function (event) {
+
+			while (matches = this.patterns.dates.ranges.from.exec(event.parsedText)) {
+
+				match = matches.filter(this.helpers.isUndefined);
+
+				if (event.parsedDates.length == 1) {
+					formattedString = event.parsedDates[0].date.month + '/' + match[1] + ((event.parsedDates[0].hasYear) ? '/' +  event.parsedDates[0].date.year : '') + ' ' + match[2] + ' ' + match[3];
+					event.parsedText = event.parsedText.replace(match[0], formattedString);
+				} else {
+					console.warn('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
+				}
+
+				event.parsedDates.push({
+					index: event.preConvertedString.indexOf(matches[0]),
+					match: matches[0],
+					formattedDate:  event.parsedDates[0].date.month + '/' + match[1] + ((event.parsedDates[0].hasYear) ? '/' +  event.parsedDates[0].date.year : ''),
+					date: {
+						month: event.parsedDates[0].date.month,
+						date:  parseInt(match[1]),
+						year: event.parsedDates[0].date.year
+					}
+				});
+
+			}
+
+			while (matches = this.patterns.dates.ranges.to.exec(event.parsedText)) {
+
+				match = matches.filter(this.helpers.isUndefined);
+
+				if (event.parsedDates.length == 1) {
+					formattedString = match[1] + ' ' + match[2] + ' ' + event.parsedDates[0].date.month + '/' + match[3] + ((event.parsedDates[0].hasYear) ? '/' +  event.parsedDates[0].date.year : '');
+					event.parsedText = event.parsedText.replace(match[0], formattedString);
+				} else {
+					console.warn('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
+				}
+
+				event.parsedDates.push({
+					index: event.preConvertedString.indexOf(matches[0]),
+					match: matches[0],
+					formattedDate:  event.parsedDates[0].date.month + '/' + match[3] + ((event.parsedDates[0].hasYear) ? '/' +  event.parsedDates[0].date.year : ''),
+					date: {
+						month: event.parsedDates[0].date.month,
+						date:  parseInt(match[3]),
+						year: event.parsedDates[0].date.year
+					}
+				});
+
 			}
 
 			return event;
@@ -752,18 +828,20 @@
 			// Convert common relative dates given
 			event = this.parseRelativeDates(event);
 
+			event = this.parseDateRanges(event);
+
+
 
 			/** TODO: Parse time ranges
 			 *  1) detect and fix low confidence partial ranges given
 			 *  2) parse time ranges
-			 *
 			 *
 			 * */
 
 
 			// not useful actually. if we got all dates parsed/
 			// todo: figure it out.
-			if (false || event.parsedTimes.length == 411111) {
+			/*if (false || event.parsedTimes.length == 411111) {
 				while (matches = this.patterns.times.fullRanges.exec(event.parsedText)) {
 					//console.log('time full ranges');
 				}
@@ -779,7 +857,7 @@
 				while (matches = this.patterns.times.partialTime2X.exec(event.parsedText)) {
 					//console.log('time partial ranges');
 				}
-			}
+			}*/
 
 			//parse date ranges
 
