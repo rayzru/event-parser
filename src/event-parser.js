@@ -10,9 +10,24 @@
  * 4) parse and remove recurrent parts from source string for futurer parses. Parse and get exceptions.
  * work is not finished yet
  *
+ *
+ * TODO: make library as String.prototype.parseEvent({config});
+ *
  * */
 
+if (!String.prototype.parseEvent) {
+	(function() {
+		String.prototype.parseEvent = function(config) {
+			console.log(this);
+			config = config || undefined;
+			var ep = new EventParser(config);
+			return ep.parse(this);
+		};
+	})();
+}
+
 (function () {
+
 
 	// constructor
 	function EventParser(config) {
@@ -22,8 +37,6 @@
 			sourceText: null,
 			weekStart: 'sunday' // monday|sunday;
 		};
-
-		this.now = this.getNow();
 
 		// data object
 		this.event = {};
@@ -249,7 +262,7 @@
 			]
 		};
 
-		//this.now = пуе;
+		this.now = undefined;
 
 		// using one EventParser instance
 		if (!(this instanceof EventParser )) return new EventParser(this.settings);
@@ -1116,5 +1129,6 @@
 
 	/** @export */
 	window.EventParser = EventParser;
+
 
 })();

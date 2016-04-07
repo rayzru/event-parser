@@ -76,9 +76,11 @@
 <script>
 	(function () {
 		jQuery(function ($) {
-			ep = new EventParser();
 			$('#source').on('keyup', function () {
-				var e = ep.parse($(this).val());
+
+				var inputString = $(this).val();
+				var e = inputString.parseEvent();
+
 				e.startDate = (moment(e.startDate).isValid()) ? moment(e.startDate).format() : "";
 				e.endDate = (moment(e.endDate).isValid()) ? moment(e.endDate).format() : "";
 				$('#output').text(JSON.stringify(e, undefined, 2));
