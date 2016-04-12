@@ -523,9 +523,8 @@
 					match: match[0],
 					formattedDate: formattedString,
 					hasYear: match.length == 4,
-					dt: (match.length == 4) ? new Date(match[3], this.sets.month.indexOf(match[2]), match[1]) : new Date(now.getFullYear(), this.sets.month.indexOf(match[2]), match[1]),
 					date: {
-						month: (this.sets.month.indexOf(match[2]) + 1),
+						month: (this.sets.month.indexOf(match[2])),
 						date: parseInt(match[1]),
 						year: (match.length == 4) ? match[3] : undefined
 					}
@@ -588,6 +587,54 @@
 
 			var now = this.getNow();
 			var targetDate = now;
+
+			// Day after tomorrow (should be only one mention, ok?)
+			if (matches = event.parsedText.match(this.patterns.dates.relative.dayAfter)) {
+
+				targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
+				formattedString = targetDate.getMonth() + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
+
+				event.parsedText = event.parsedText.replace(matches[0], formattedString);
+
+				event.parsedDates.push({
+					index: event.preConvertedString.indexOf(matches[0]),
+					match: matches[0],
+					formattedDate: formattedString,
+					date: {
+						month: targetDate.getMonth(),
+						date: targetDate.getDate(),
+						year: targetDate.getFullYear()
+					}
+				});
+			}
+
+			// in x days|weeks|month
+			while (matches = this.patterns.dates.relative.in.exec(event.parsedText)) {
+
+				match = matches.filter(this.helpers.isUndefined);
+
+				if (match.length == 2) {
+					targetDate = this.helpers.getDateShifted(now, match[1], 1);
+				} else if (match.length == 3) {
+					targetDate = this.helpers.getDateShifted(now, match[2], match[1]);
+				}
+
+				formattedString = targetDate.getMonth() + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
+
+				event.parsedText = event.parsedText.replace(matches[0], formattedString);
+
+				event.parsedDates.push({
+					index: event.preConvertedString.indexOf(matches[0]),
+					match: match[0],
+					formattedDate: formattedString,
+					date: {
+						month: targetDate.getMonth(),
+						date: targetDate.getDate(),
+						year: targetDate.getFullYear()
+					}
+				});
+			}
+
 
 			// Convert common relative dates given
 			while (matches = this.patterns.dates.relative.common.exec(event.parsedText)) {
@@ -697,52 +744,6 @@
 				return event;
 			}
 
-
-			// Day after tomorrow (should be only one mention, ok?)
-			if (matches = event.parsedText.match(this.patterns.dates.relative.dayAfter)) {
-
-				targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
-				formattedString = targetDate.getMonth() + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
-
-				event.parsedText = event.parsedText.replace(matches[0], formattedString);
-
-				event.parsedDates.push({
-					index: event.preConvertedString.indexOf(matches[0]),
-					match: match[0],
-					formattedDate: formattedString,
-					date: {
-						month: targetDate.getMonth(),
-						date: targetDate.getDate(),
-						year: targetDate.getFullYear()
-					}
-				});
-			}
-
-			while (matches = this.patterns.dates.relative.in.exec(event.parsedText)) {
-
-				match = matches.filter(this.helpers.isUndefined);
-
-				if (match.length == 2) {
-					targetDate = this.helpers.getDateShifted(now, match[1], 1);
-				} else if (match.length == 3) {
-					targetDate = this.helpers.getDateShifted(now, match[2], match[1]);
-				}
-
-				formattedString = targetDate.getMonth() + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
-
-				event.parsedText = event.parsedText.replace(matches[0], formattedString);
-
-				event.parsedDates.push({
-					index: event.preConvertedString.indexOf(matches[0]),
-					match: match[0],
-					formattedDate: formattedString,
-					date: {
-						month: targetDate.getMonth(),
-						date: targetDate.getDate(),
-						year: targetDate.getFullYear()
-					}
-				});
-			}
 
 			return event;
 		},
