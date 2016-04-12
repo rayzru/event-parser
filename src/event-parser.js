@@ -186,7 +186,8 @@
 					from: new RegExp('((?!\\d{1,2}\\/)\\d{1,2})(?:(?:\\s)?(' + this.sets.range.splitter.join('|') + ')(?:\\s)?)(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)', 'gi'),
 					to: new RegExp('(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)(?:(?:\\s)?(' + this.sets.range.splitter.join('|') + ')(?:\\s)?)((?!\\d{1,2}\\/)\\d{1,2})', 'gi'),
 					between: /\s/ig
-	}			},
+				}
+			},
 
 			// todo: add AT, ON in front of detection block
 			times: {
@@ -586,6 +587,7 @@
 			var matches, match, targetDate, formattedString, relPrefix, relSuffix;
 
 			var now = this.getNow();
+			var targetDate = now;
 
 			// Convert common relative dates given
 			while (matches = this.patterns.dates.relative.common.exec(event.parsedText)) {
@@ -615,19 +617,19 @@
 				} else {
 
 					// single
-					switch (match[relPrefix.subjectIndex]) {
+					switch (match[relPrefix.subjectIndex].toLowerCase()) {
 						case 'tomorrow':
 							targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
 							break;
 						case 'today':
 							// today
-							targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth(), now.getDate());
+							targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
 							break;
 						case 'day':
 							if (relPrefix.next) {
 								// same as tomorrow
 								// at next day
-								targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth(), now.getDate());
+								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
 
 							} else if (relPrefix.last) {
 								//console.log('got last');
@@ -640,12 +642,12 @@
 							break;
 						case 'week':
 							if (relPrefix.next) {
-								targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth(), now.getDate() + 7);
+								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7, 0, 0, 0);
 							}
 							break;
 						case 'month':
 							if (relPrefix.next) {
-								targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth() + 1, now.getDate());
+								targetDate = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate(), 0, 0, 0);
 								formattedString = this.sets.month[now.getMonth() + 1];
 								event.parsedText = event.parsedText.replace(match[0], formattedString);
 								event = this.parseDates(event);
@@ -653,7 +655,7 @@
 								//start parse from beginning
 								this.patterns.dates.relative.common.lastIndex = 0;
 							} else if (relPrefix.self) {
-								targetDate = new Date().setFullYear(now.getFullYear(), now.getMonth(), now.getDate());
+								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
 								formattedString = this.sets.month[now.getMonth()];
 								event.parsedText = event.parsedText.replace(match[0], formattedString);
 								event = this.parseDates(event);
@@ -664,7 +666,7 @@
 							break;
 						case 'year':
 							if (relPrefix.next) {
-								targetDate = new Date().setFullYear(now.getFullYear() + 1, now.getMonth() + 1, now.getDate());
+								targetDate = new Date(now.getFullYear() + 1, now.getMonth() + 1, now.getDate(), 0, 0, 0);
 							}
 							break;
 						default:
@@ -752,7 +754,7 @@
 				match = matches.filter(this.helpers.isUndefined);
 
 				if (event.parsedDates.length == 1) {
-					formattedString = event.parsedDates[0].date.month + '/' + match[1] + ((event.parsedDates[0].hasYear) ? '/' +  event.parsedDates[0].date.year : '') + ' ' + match[2] + ' ' + match[3];
+					formattedString = event.parsedDates[0].date.month + '/' + match[1] + ((event.parsedDates[0].hasYear) ? '/' + event.parsedDates[0].date.year : '') + ' ' + match[2] + ' ' + match[3];
 					event.parsedText = event.parsedText.replace(match[0], formattedString);
 				} else {
 					console.warn('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
@@ -761,10 +763,10 @@
 				event.parsedDates.push({
 					index: event.preConvertedString.indexOf(matches[0]),
 					match: matches[0],
-					formattedDate:  event.parsedDates[0].date.month + '/' + match[1] + ((event.parsedDates[0].hasYear) ? '/' +  event.parsedDates[0].date.year : ''),
+					formattedDate: event.parsedDates[0].date.month + '/' + match[1] + ((event.parsedDates[0].hasYear) ? '/' + event.parsedDates[0].date.year : ''),
 					date: {
 						month: event.parsedDates[0].date.month,
-						date:  parseInt(match[1]),
+						date: parseInt(match[1]),
 						year: event.parsedDates[0].date.year
 					}
 				});
@@ -776,7 +778,7 @@
 				match = matches.filter(this.helpers.isUndefined);
 
 				if (event.parsedDates.length == 1) {
-					formattedString = match[1] + ' ' + match[2] + ' ' + event.parsedDates[0].date.month + '/' + match[3] + ((event.parsedDates[0].hasYear) ? '/' +  event.parsedDates[0].date.year : '');
+					formattedString = match[1] + ' ' + match[2] + ' ' + event.parsedDates[0].date.month + '/' + match[3] + ((event.parsedDates[0].hasYear) ? '/' + event.parsedDates[0].date.year : '');
 					event.parsedText = event.parsedText.replace(match[0], formattedString);
 				} else {
 					console.warn('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
@@ -785,10 +787,10 @@
 				event.parsedDates.push({
 					index: event.preConvertedString.indexOf(matches[0]),
 					match: matches[0],
-					formattedDate:  event.parsedDates[0].date.month + '/' + match[3] + ((event.parsedDates[0].hasYear) ? '/' +  event.parsedDates[0].date.year : ''),
+					formattedDate: event.parsedDates[0].date.month + '/' + match[3] + ((event.parsedDates[0].hasYear) ? '/' + event.parsedDates[0].date.year : ''),
 					date: {
 						month: event.parsedDates[0].date.month,
-						date:  parseInt(match[3]),
+						date: parseInt(match[3]),
 						year: event.parsedDates[0].date.year
 					}
 				});
@@ -833,7 +835,6 @@
 			event = this.parseDateRanges(event);
 
 
-
 			/** TODO: Parse time ranges
 			 *  1) detect and fix low confidence partial ranges given
 			 *  2) parse time ranges
@@ -844,22 +845,22 @@
 			// not useful actually. if we got all dates parsed/
 			// todo: figure it out.
 			/*if (false || event.parsedTimes.length == 411111) {
-				while (matches = this.patterns.times.fullRanges.exec(event.parsedText)) {
-					//console.log('time full ranges');
-				}
-			}
+			 while (matches = this.patterns.times.fullRanges.exec(event.parsedText)) {
+			 //console.log('time full ranges');
+			 }
+			 }
 
-			// should check if there is no enough dates parsed
-			if (event.parsedTimes.length == 1) {
+			 // should check if there is no enough dates parsed
+			 if (event.parsedTimes.length == 1) {
 
-				while (matches = this.patterns.times.partialX2Time.exec(event.parsedText)) {
-					//console.log('time partial ranges');
-				}
+			 while (matches = this.patterns.times.partialX2Time.exec(event.parsedText)) {
+			 //console.log('time partial ranges');
+			 }
 
-				while (matches = this.patterns.times.partialTime2X.exec(event.parsedText)) {
-					//console.log('time partial ranges');
-				}
-			}*/
+			 while (matches = this.patterns.times.partialTime2X.exec(event.parsedText)) {
+			 //console.log('time partial ranges');
+			 }
+			 }*/
 
 			//parse date ranges
 
@@ -873,7 +874,7 @@
 			event.parsedTitle = event.parsedText;
 			event.parsedTitle = event.parsedTitle.replace(this.patterns.dates.formatted, '');
 			event.parsedTitle = event.parsedTitle.replace(this.patterns.times.formatted, '');
-			event.parsedTitle = event.parsedTitle.replace(/ +(?= )/g,'').trim(); // remove multiple spaces
+			event.parsedTitle = event.parsedTitle.replace(/ +(?= )/g, '').trim(); // remove multiple spaces
 
 			if (!event.startDate) {
 
@@ -923,7 +924,7 @@
 								0, 0, 0, 0
 							);
 
-							event.allDay = true;
+						event.allDay = true;
 
 					}
 
@@ -1120,12 +1121,12 @@
 	/** @export */
 	window.EventParser = EventParser;
 
-	String.prototype.parseEvent = function(config) {
+	String.prototype.parseEvent = function (config) {
 		config = config || undefined;
 		var ep = new EventParser(config);
 		return ep.parse(this);
 	};
 
-	
+
 })();
 

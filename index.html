@@ -15,7 +15,7 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment.min.js"></script>
 
-	<script src="dist/event-parser.min.js"></script>
+	<script src="src/event-parser.js"></script>
 
 	<style>
 		#source {
@@ -46,13 +46,9 @@
 																			class="octicon octicon-link"></span></a>Usage
 	</h3>
 
-	<div class="highlight highlight-source-js"><pre><span class="pl-k">var</span> <span class="pl-c1">ep</span> <span
-			class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">EventParser</span>();
-<span class="pl-k">var</span> <span class="pl-c1">event</span> <span
-				class="pl-k">=</span> <span class="pl-c1">ep</span>.<span class="pl-c1">parse</span>(<span
-				class="pl-s"><span class="pl-pds">'</span>Pick up Dave on 6 of January at 6pm<span class="pl-pds">'</span></span>);</pre>
+	<div class="highlight highlight-source-js"><pre><span class="pl-k">var</span> <span class="pl-c1">event</span> <span
+				class="pl-k">=</span> <span class="pl-pds">'<span class="pl-s">Pick up Dave on 6 of January at 6pm</span><span class="pl-pds">'</span></span>.<span class="pl-ent">parseEvent</span>()</pre>
 	</div>
-
 
 	<h3>
 		<a id="test" class="anchor" href="#test" aria-hidden="true">
@@ -61,7 +57,7 @@
 					class="octicon octicon-link"></span></a>Test
 	</h3>
 
-	<div><input type="text" class="form-control" id="source" value="Pick up Dave on 6 of January at 6pm"></div>
+	<div><input type="text" class="form-control" id="source" value="Meeting Today"></div>
 	<div class="highlight highlight-source-js">
 		<pre id="output"></pre>
 	</div>

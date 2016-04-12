@@ -1,4 +1,4 @@
-describe("Mocking relative", function() {
+describe("Relative dates", function() {
 
 	beforeEach(function() {
 		jasmine.clock().install();
