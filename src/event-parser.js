@@ -15,17 +15,6 @@
  *
  * */
 
-if (!String.prototype.parseEvent) {
-	(function() {
-		String.prototype.parseEvent = function(config) {
-			console.log(this);
-			config = config || undefined;
-			var ep = new EventParser(config);
-			return ep.parse(this);
-		};
-	})();
-}
-
 (function () {
 
 
@@ -1127,8 +1116,16 @@ if (!String.prototype.parseEvent) {
 
 	};
 
+
 	/** @export */
 	window.EventParser = EventParser;
 
+	String.prototype.parseEvent = function(config) {
+		config = config || undefined;
+		var ep = new EventParser(config);
+		return ep.parse(this);
+	};
 
+	
 })();
+

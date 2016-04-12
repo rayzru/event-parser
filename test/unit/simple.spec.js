@@ -1,7 +1,5 @@
 describe("Mocking relative", function() {
 
-	var ep = EventParser();
-
 	beforeEach(function() {
 		jasmine.clock().install();
 	});
@@ -15,7 +13,7 @@ describe("Mocking relative", function() {
 		var today = new Date();
 		jasmine.clock().mockDate(today);
 
-		expect(ep.parse("Meeting today")).toEqual(jasmine.objectContaining({
+		expect("Meeting today".parseEvent()).toEqual(jasmine.objectContaining({
 			startDate: today.valueOf()
 		}));
 
