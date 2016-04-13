@@ -17,7 +17,6 @@
 
 (function () {
 
-
 	// constructor
 	function EventParser(config) {
 
@@ -491,7 +490,6 @@
 						match: match[0],
 						formattedDate: formattedString,
 						hasYear: match.length == 4,
-						dt: (match.length == 4) ? new Date(match[3], this.sets.month.indexOf(match[1]), match[2]) : new Date(now.getFullYear(), this.sets.month.indexOf(match[1]), match[2]),
 						date: {
 							month: (this.sets.month.indexOf(match[1]) + 1),
 							date: parseInt(match[2]),
@@ -863,10 +861,6 @@
 			 }
 			 }*/
 
-			//parse date ranges
-
-			//parse relatives
-
 
 			//
 			// Finalize dates, make ajustements
@@ -883,11 +877,12 @@
 					// has dates
 					if (event.parsedTimes.length) {
 						// has times
+						event.allDay = false;
 
 						event.startDate =
 							new Date(
 								(event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : now.getFullYear(),
-								event.parsedDates[0].date.month,
+								event.parsedDates[0].date.month - 1,
 								event.parsedDates[0].date.date,
 								event.parsedTimes[0].time.hours,
 								event.parsedTimes[0].time.minutes, 0, 0
@@ -899,7 +894,7 @@
 								event.endDate =
 									new Date(
 										(event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : now.getFullYear(),
-										event.parsedDates[0].date.month,
+										event.parsedDates[0].date.month - 1,
 										event.parsedDates[0].date.date,
 										event.parsedTimes[1].time.hours,
 										event.parsedTimes[1].time.minutes, 0, 0
@@ -908,7 +903,7 @@
 								event.endDate =
 									new Date(
 										(event.parsedDates[1].hasYear) ? event.parsedDates[1].date.year : now.getFullYear(),
-										event.parsedDates[1].date.month,
+										event.parsedDates[1].date.month - 1,
 										event.parsedDates[1].date.date,
 										event.parsedTimes[1].time.hours,
 										event.parsedTimes[1].time.minutes, 0, 0
@@ -920,7 +915,7 @@
 						event.startDate =
 							new Date(
 								(event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : now.getFullYear(),
-								event.parsedDates[0].date.month,
+								event.parsedDates[0].date.month - 1,
 								event.parsedDates[0].date.date,
 								0, 0, 0, 0
 							);
@@ -935,15 +930,39 @@
 					if (event.parsedTimes.length) {
 						// has times
 						if (event.parsedTimes.length == 1) {
+
+							event.allDay = false;
+
 							event.startDate =
-								new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.parsedTimes[0].time.hours, event.parsedTimes[0].time.minutes, 0, 0);
+								new Date(
+									now.getFullYear(),
+									now.getMonth(),
+									now.getDate(),
+									event.parsedTimes[0].time.hours,
+									event.parsedTimes[0].time.minutes,
+									0, 0);
 
 
 						} else if (event.parsedTimes.length == 2) {
+
+							event.allDay = false;
+
 							event.startDate =
-								new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.parsedTimes[0].time.hours, event.parsedTimes[0].time.minutes, 0, 0);
+								new Date(
+									now.getFullYear(),
+									now.getMonth(),
+									now.getDate(),
+									event.parsedTimes[0].time.hours,
+									event.parsedTimes[0].time.minutes,
+									0, 0);
 							event.endDate =
-								new Date(now.getFullYear(), now.getMonth(), now.getDate(), event.parsedTimes[1].time.hours, event.parsedTimes[1].time.minutes, 0, 0);
+								new Date(
+									now.getFullYear(),
+									now.getMonth(),
+									now.getDate(),
+									event.parsedTimes[1].time.hours,
+									event.parsedTimes[1].time.minutes,
+									0, 0);
 
 						}
 
@@ -973,7 +992,6 @@
 		//
 		// Helpers functions
 		// ================================
-
 
 		helpers: {
 
@@ -1114,13 +1132,7 @@
 				return date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate() && date1.getFullYear() === date2.getFullYear();
 			}
 		}
-
-
 	};
-
-
-	/** @export */
-	window.EventParser = EventParser;
 
 	String.prototype.parseEvent = function (config) {
 		config = config || undefined;
@@ -1128,6 +1140,7 @@
 		return ep.parse(this);
 	};
 
+	/** @export */
+	window.EventParser = EventParser;
 
 })();
-
