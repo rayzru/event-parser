@@ -970,8 +970,7 @@
 						event.allDay = true;
 						// has no dates captured, setting event startDate from now
 
-						event.startDate =
-							new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), 0, 0);
+						// event.startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), 0, 0);
 
 						//console.info('No dates and times detected');
 						event.isValidDate = false;
