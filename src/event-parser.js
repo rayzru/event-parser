@@ -522,7 +522,7 @@
 					formattedDate: formattedString,
 					hasYear: match.length == 4,
 					date: {
-						month: (this.sets.month.indexOf(match[2])),
+						month: (this.sets.month.indexOf(match[2]) + 1),
 						date: parseInt(match[1]),
 						year: (match.length == 4) ? match[3] : undefined
 					}
@@ -589,8 +589,8 @@
 			// Day after tomorrow (should be only one mention, ok?)
 			if (matches = event.parsedText.match(this.patterns.dates.relative.dayAfter)) {
 
-				targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
-				formattedString = targetDate.getMonth() + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
+				targetDate =  new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
+				formattedString = (targetDate.getMonth() + 1) + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
 
 				event.parsedText = event.parsedText.replace(matches[0], formattedString);
 
@@ -599,7 +599,7 @@
 					match: matches[0],
 					formattedDate: formattedString,
 					date: {
-						month: targetDate.getMonth(),
+						month: targetDate.getMonth() + 1,
 						date: targetDate.getDate(),
 						year: targetDate.getFullYear()
 					}
@@ -626,7 +626,7 @@
 					match: match[0],
 					formattedDate: formattedString,
 					date: {
-						month: targetDate.getMonth(),
+						month: targetDate.getMonth() + 1,
 						date: targetDate.getDate(),
 						year: targetDate.getFullYear()
 					}
@@ -730,7 +730,7 @@
 						formattedDate: formattedString,
 						dt: new Date(targetDate),
 						date: {
-							month: targetDate.getMonth(),
+							month: targetDate.getMonth() + 1,
 							date: targetDate.getDate(),
 							year: targetDate.getFullYear()
 						}
@@ -871,6 +871,13 @@
 			event.parsedTitle = event.parsedTitle.replace(this.patterns.times.formatted, '');
 			event.parsedTitle = event.parsedTitle.replace(/ +(?= )/g, '').trim(); // remove multiple spaces
 
+			console.groupCollapsed('Parser found Dates (' + event.parsedDates.length + ') and Times (' + event.parsedTimes.length + ')');
+			console.info('Dates: ' + event.parsedDates.length);
+			console.dir(event.parsedDates);
+			console.info('Times: ' + event.parsedTimes.length);
+			console.dir(event.parsedTimes);
+			console.groupEnd();
+
 			if (!event.startDate) {
 
 				if (event.parsedDates.length) {
@@ -970,7 +977,7 @@
 						event.allDay = true;
 						// has no dates captured, setting event startDate from now
 
-						// event.startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), 0, 0);
+						event.startDate = null;
 
 						//console.info('No dates and times detected');
 						event.isValidDate = false;
