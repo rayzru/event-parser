@@ -43,4 +43,11 @@ describe("Dates", function() {
 		expect(el.startDate).toBeUndefined();
 	});
 
+
+	it("Wrong date 111/222/333", function() {
+		el = "Parse on 123/123/123 date".parseEvent();
+
+		expect(el.startDate).toBeUndefined();
+	});
+
 });
