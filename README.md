@@ -24,9 +24,9 @@ var event = "Have fun with Jane at home on 11th dec".parseEvent();
 
 ```javascript
 {
-	   title: "Have fun with Jane at home",
-	   startDate: "‌Sun Dec 11 2016 00:00:00 GMT+0300",
-	   endDate: "",
+	   title: "Have fun with Jane at home at 12 dec 2020",
+	   startDate: "‌Sun Dec 12 2020 00:00:00 GMT+0300",
+	   endDate: undefined,
 	   allDay: true,
 	   isRecurrent: false
 }
