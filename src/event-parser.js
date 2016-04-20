@@ -136,7 +136,7 @@
 				ranges: {
 					formatted: new RegExp('(?:' + this.sets.range.prefix.join('|') + ')?(?:\\s)?(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)(?:(?:\\s)?(' + this.sets.range.splitter.join('|') + ')(?:\\s)?)(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)', 'gi'),
 					from: new RegExp('(?:' + this.sets.range.prefix.join('|') + ')?(?:\\s)?[^\/\\d+](\\d{1,2})(?:(?:\\s)?(' + this.sets.range.splitter.join('|') + ')(?:\\s)?)(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)', 'gi'),
-					to: new RegExp('(?:' + this.sets.range.prefix.join('|') + ')?(?:\\s)?(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)(?:(?:\\s)?(' + this.sets.range.splitter.join('|') + ')(?:\\s)?)[^\/\\d+](\\d{1,2})', 'gi'),
+					to: new RegExp('(?:' + this.sets.range.prefix.join('|') + ')?(?:\\s)?(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)(?:(?:\\s)?(' + this.sets.range.splitter.join('|') + ')(?:\\s)?)(\\d{1,2})[^\/\\d+]', 'gi'),
 					between: /\s/ig
 				}
 			},
