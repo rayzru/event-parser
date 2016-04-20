@@ -866,6 +866,7 @@
 						// has times
 						event.allDay = false;
 
+
 						event.startDate =
 							new Date(
 								(event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : now.getFullYear(),
@@ -877,12 +878,16 @@
 
 
 						if (event.parsedTimes.length == 2) {
+
+							// suggest time is sheduled on the next day when last hours are less that prevoious.
+							var suggestDayDelta = (parseFloat(event.parsedTimes[0].time.hours + '.' + event.parsedTimes[0].time.minutes) > parseFloat(event.parsedTimes[1].time.hours + '.' +event.parsedTimes[1].time.minutes)) ? 1 : 0;
+
 							if (event.parsedDates.length == 1) {
 								event.endDate =
 									new Date(
 										(event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : now.getFullYear(),
 										event.parsedDates[0].date.month - 1,
-										event.parsedDates[0].date.date,
+										event.parsedDates[0].date.date + suggestDayDelta,
 										event.parsedTimes[1].time.hours,
 										event.parsedTimes[1].time.minutes, 0, 0
 									);
