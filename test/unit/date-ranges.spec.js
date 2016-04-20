@@ -16,8 +16,23 @@ describe("Date ranges", function() {
 
 	});
 
-	it("incomplete from to", function() {
+	it("incomplete range from", function() {
+
 		el = "Visit parents from 2 to 3 dec".parseEvent();
+
+		expect(el.startDate.toDateString())
+			.toEqual(moment(now).month(11).date(2).toDate().toDateString());
+
+		expect(el.endDate.toDateString())
+			.toEqual(moment(now).month(11).date(3).toDate().toDateString());
+
+		expect(el.allDay).toEqual(true);
+
+	});
+
+	it("incomplete range to", function() {
+
+		el = "Visit parents from 2 dec to 3".parseEvent();
 
 		expect(el.startDate.toDateString())
 			.toEqual(moment(now).month(11).date(2).toDate().toDateString());
