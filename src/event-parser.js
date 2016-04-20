@@ -66,8 +66,8 @@
 				normal: ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen']
 			},
 			range: {
-				splitter: ['to', '-', '(?:un)?till?', 'through', 'thru', 'and', 'ends'],
-				prefix: ['from', 'start(?:ing)?', 'on', 'at']
+				splitter: ['to', '(?:-+)?-', '(?:un)?till?', 'through', 'thru', 'and', 'ends'],
+				prefix: ['between', 'from', 'start(?:ing)?', 'on', 'at']
 			},
 			timeRelatives: ['afternoon', 'night', 'evening', 'morning']
 		};
@@ -133,10 +133,10 @@
 
 				// date ranges
 				// from - to, in between
-				// todo make ranges parsable?
 				ranges: {
-					from: new RegExp('((?!\\d{1,2}\\/)\\d{1,2})(?:(?:\\s)?(' + this.sets.range.splitter.join('|') + ')(?:\\s)?)(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)', 'gi'),
-					to: new RegExp('(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)(?:(?:\\s)?(' + this.sets.range.splitter.join('|') + ')(?:\\s)?)((?!\\d{1,2}\\/)\\d{1,2})', 'gi'),
+					formatted: new RegExp('(?:' + this.sets.range.prefix.join('|') + ')?(?:\\s)?(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)(?:(?:\\s)?(' + this.sets.range.splitter.join('|') + ')(?:\\s)?)(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)', 'gi'),
+					from: new RegExp('(?:' + this.sets.range.prefix.join('|') + ')?(?:\\s)?[^\/\\d+](\\d{1,2})(?:(?:\\s)?(' + this.sets.range.splitter.join('|') + ')(?:\\s)?)(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)', 'gi'),
+					to: new RegExp('(?:' + this.sets.range.prefix.join('|') + ')?(?:\\s)?(\\d{1,2}\\/\\d{1,2}(?:\\/\\d{2,4})?)(?:(?:\\s)?(' + this.sets.range.splitter.join('|') + ')(?:\\s)?)[^\/\\d+](\\d{1,2})', 'gi'),
 					between: /\s/ig
 				}
 			},
@@ -146,9 +146,9 @@
 				formatted: /((?:(?:at|on)\s)?(?:\d{1,2})(?::)(?:\d{2}))/gi,
 				singleInstances: /(?:(?:at|on)?(\d{1,2})(?:(?::)(\d{2}))(?:(?:\s)?(am|pm))?|(\d{1,2})(?:\s)?(am|pm))/gi,
 
-				fullRanges: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?:\:)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?::)(\\d{2}))', 'gi'),
-				partialX2Time: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?:\:)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?:\\:)(\\d{2}))', 'gi'),
-				partialTime2X: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?:\:)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?:\\:)(\\d{2}))', 'gi')
+				fullRanges: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?::)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?::)(\\d{2}))', 'gi'),
+				partialX2Time: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?::)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?:\\:)(\\d{2}))', 'gi'),
+				partialTime2X: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?::)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?:\\:)(\\d{2}))', 'gi')
 
 			},
 
@@ -191,6 +191,7 @@
 				[/(\baug(?:ust)?\b)/i, 'august'],
 				[/(\bsep(?:t(?:ember)?)?\b)/i, 'september'],
 				[/(\boct(?:ober)?\b)/i, 'october'],
+				[/(\bnov(?:ember)?\b)/i, 'november'],
 				[/(\bdec(?:ember)?\b)/i, 'december']
 			],
 
@@ -726,9 +727,9 @@
 
 			while (matches = this.patterns.dates.ranges.from.exec(event.parsedText)) {
 
-				match = matches.filter(this.helpers.isUndefined);
-
 				if (event.parsedDates.length == 1) {
+
+					match = matches.filter(this.helpers.isUndefined);
 
 					date = (parseInt(match[1]) <= 31 && parseInt(match[1]) >= 1) ? parseInt(match[1]) : null;
 					month = event.parsedDates[0].date.month;
@@ -760,9 +761,9 @@
 
 			while (matches = this.patterns.dates.ranges.to.exec(event.parsedText)) {
 
-				match = matches.filter(this.helpers.isUndefined);
-
 				if (event.parsedDates.length == 1) {
+
+					match = matches.filter(this.helpers.isUndefined);
 
 
 					date = (parseInt(match[1]) <= 31 && parseInt(match[1]) >= 1) ? parseInt(match[1]) : null;
@@ -832,39 +833,12 @@
 			event = this.parseDateRanges(event);
 
 
-			/** TODO: Parse time ranges
-			 *  1) detect and fix low confidence partial ranges given
-			 *  2) parse time ranges
-			 *
-			 * */
-
-
-			// not useful actually. if we got all dates parsed/
-			// todo: figure it out.
-			/*if (false || event.parsedTimes.length == 411111) {
-			 while (matches = this.patterns.times.fullRanges.exec(event.parsedText)) {
-			 //console.log('time full ranges');
-			 }
-			 }
-
-			 // should check if there is no enough dates parsed
-			 if (event.parsedTimes.length == 1) {
-
-			 while (matches = this.patterns.times.partialX2Time.exec(event.parsedText)) {
-			 //console.log('time partial ranges');
-			 }
-
-			 while (matches = this.patterns.times.partialTime2X.exec(event.parsedText)) {
-			 //console.log('time partial ranges');
-			 }
-			 }*/
-
-
 			//
 			// Finalize dates, make ajustements
 			// ================================
 
 			event.parsedTitle = event.parsedText;
+			event.parsedTitle = event.parsedTitle.replace(this.patterns.dates.ranges.formatted, '');
 			event.parsedTitle = event.parsedTitle.replace(this.patterns.dates.formatted, '');
 			event.parsedTitle = event.parsedTitle.replace(this.patterns.times.formatted, '');
 			event.parsedTitle = event.parsedTitle.replace(/ +(?= )/g, '').trim(); // remove multiple spaces
@@ -910,7 +884,7 @@
 							} else if (event.parsedDates.length == 2) {
 								event.endDate =
 									new Date(
-										(event.parsedDates[1].hasYear) ? event.parsedDates[1].date.year : now.getFullYear(),
+										(event.parsedDates[1].hasYear) ? event.parsedDates[1].date.year : (event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : now.getFullYear(),
 										event.parsedDates[1].date.month - 1,
 										event.parsedDates[1].date.date,
 										event.parsedTimes[1].time.hours,
@@ -927,6 +901,16 @@
 								event.parsedDates[0].date.date,
 								0, 0, 0, 0
 							);
+
+						if (event.parsedDates.length == 2) {
+							event.endDate =
+								new Date(
+									(event.parsedDates[1].hasYear) ? event.parsedDates[1].date.year : (event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : now.getFullYear(),
+									event.parsedDates[1].date.month - 1,
+									event.parsedDates[1].date.date,
+									0, 0, 0, 0
+								);
+						}
 
 						event.allDay = true;
 
@@ -963,6 +947,7 @@
 									event.parsedTimes[0].time.hours,
 									event.parsedTimes[0].time.minutes,
 									0, 0);
+
 							event.endDate =
 								new Date(
 									now.getFullYear(),
@@ -976,9 +961,10 @@
 
 					} else {
 						event.allDay = true;
-						// has no dates captured, setting event startDate from now
 
+						// has no dates captured
 						event.startDate = null;
+						event.endDate = null;
 
 						event.isValidDate = false;
 					}
@@ -987,8 +973,8 @@
 
 			return {
 				title: event.parsedTitle.trim(),
-				startDate: (event.startDate instanceof Date) ? new Date(event.startDate) : undefined,
-				endDate: (event.endDate instanceof Date) ? new Date(event.endDate) : undefined,
+				startDate: (this.helpers.isDateObject(event.startDate)) ? new Date(event.startDate) : undefined,
+				endDate: (this.helpers.isDateObject(event.endDate)) ? new Date(event.endDate) : undefined,
 				allDay: event.allDay,
 				isRecurrent: event.isRecurrent
 				// Recurrencies: event.parsedRecurrencies
@@ -1148,6 +1134,10 @@
 					daysInMonth[1] = 29;
 				}
 				return d <= daysInMonth[--m]
+			},
+
+			isDateObject: function (date) {
+				return Object.prototype.toString.call(date) === '[object Date]';
 			},
 
 			isSameDay: function (date1, date2) {
