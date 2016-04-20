@@ -13,7 +13,6 @@ gulp.task('js', function () {
 	//.pipe(notify({ message: 'Finished minifying JavaScript'}));
 });
 
-
 gulp.task('watch', function () {
 	gulp.watch('src/**/*.js', ['js']);
 });

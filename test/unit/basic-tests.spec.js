@@ -3,8 +3,8 @@ describe("mockup", function() {
 	var event = 'something'.parseEvent();
 
 	it("Defined", function() {
-		expect(event.startDate).toBeDefined();
-		expect(event.endDate).toBeDefined();
+		expect(event.startDate).toBeUndefined();
+		expect(event.endDate).toBeUndefined();
 		expect(event.allDay).toBeDefined();
 	});
 });

@@ -3,7 +3,7 @@
   "version": "0.0.12",
   "author": "Andrew RayZ Rumm",
   "description": "Natural-language event parser for Javascript.",
-  "main": "dist/event-parser.min.js",
+  "main": "dist/event-parser.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/rayzru/event-parser.git"

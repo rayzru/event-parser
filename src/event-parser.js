@@ -28,7 +28,6 @@
 
 		// data object
 		this.event = {};
-		this.curagoEvent = {};
 
 		// checking given configuration
 		if (typeof config === "string") {
@@ -67,41 +66,6 @@
 			isValidDate: false,
 			allDay: true
 
-		};
-
-
-		this.curagoEventTemplate = {
-			title: "",
-			starts_at: null,	// event start date
-			ends_at: null,		// event end date
-
-			until: null,		// limit recurrency execution up to date or Null for unlimited execution
-
-			frequency: "once",  // 'once', 'daily', 'weekly', 'monthly', 'yearly'
-
-			separation: 1,		// event recurrance offset (each 2 week: frequency=weekly, separation=2)
-
-			count: null,		// recurrency count
-
-			/*
-			 * Array of event reccurance rules
-			 * */
-			recurrent_attributes: [
-				{
-					day: 0,
-					week: 0,
-					month: 0
-				}
-			],
-
-			/*
-			 * Array of excluded dates from event reccurance rules
-			 * */
-			cancelation_attributes: [
-				{
-					date: ""
-				}
-			]
 		};
 
 		this.sets = {
@@ -421,7 +385,7 @@
 							subjectIndex = 2;
 							hasNumber = parseInt(found[0]);
 						} else {
-							//console.warn('Unexpected value: ', matches[1]);
+
 						}
 						break;
 				}
@@ -444,60 +408,74 @@
 		},
 
 		parseDates: function (event) {
-			var match, matches, formattedString;
-			var now = this.getNow();
+			var match, matches, formattedString, date, month, year;
 
-			// get all well-formatted dates first
 			this.patterns.dates.formatted.lastIndex = 0;
 			while (matches = this.patterns.dates.formatted.exec(event.parsedText)) {
-				event.isValidDate = true;
+
 				match = matches.filter(this.helpers.isUndefined);
 
-				//this.patterns.dates.formatted.lastIndex = matches.index + 1;
+				date = (parseInt(match[1]) <= 31 && parseInt(match[1]) >= 1) ? parseInt(match[1]) : null;
+				month = (parseInt(match[0]) <= 12 && parseInt(match[0]) >= 1) ? parseInt(match[0]) : null;
+				year = ((match.length == 4) ? parseInt(match[3]) : null);
 
-				formattedString = match[0];
+				if (date && month && this.helpers.isValidDate(match[0])) {
 
-				event.parsedDates.push({
-						index: matches.index,
-						match: formattedString,
-						formattedDate: formattedString,
-						hasYear: match.length == 4,
-						date: {
-							month: parseInt(match[1]),
-							date: parseInt(match[2]),
-							year: ((match.length == 4) ? parseInt(match[3]) : undefined)
+					event.hasValidDate = true;
+
+					formattedString = match[0];
+
+					event.parsedDates.push({
+							index: matches.index,
+							match: formattedString,
+							formattedDate: formattedString,
+							hasYear: this.helpers.isNumeric(year),
+							date: {
+								month: month,
+								date: date,
+								year: year
+							}
 						}
-					}
-				);
+					);
+				}
+
 			}
 
 			// M D Y
 			this.patterns.dates.mdyStrings.lastIndex = 0;
 			while (matches = this.patterns.dates.mdyStrings.exec(event.parsedText)) {
-				event.isValidDate = true;
+
 				match = matches.filter(this.helpers.isUndefined);
+
+				date = (parseInt(match[2]) <= 31 && parseInt(match[2]) >= 1) ? parseInt(match[2]) : null;
+				month = (this.sets.month.indexOf(match[1]) >= 0) ? this.sets.month.indexOf(match[1]) + 1 : null;
+				year = ((match.length == 4) ? parseInt(match[3]) : null);
+				formattedString = month + '/' + date + ((year) ? '/' + year : '');
 
 				this.patterns.dates.mdyStrings.lastIndex = matches.index + 1;
 
 				// changing to MM/DD || MM/DD/YYYY
-				formattedString =
-					(this.sets.month.indexOf(match[1]) + 1) + '/' + parseInt(match[2]) + ((match.length == 4) ?
-					'/' + match[3] : "");
-				event.parsedText = event.parsedText.replace(match[0], formattedString);
 
-				event.parsedDates.push({
-						index: matches.index,
-						match: match[0],
-						formattedDate: formattedString,
-						hasYear: match.length == 4,
-						date: {
-							month: (this.sets.month.indexOf(match[1]) + 1),
-							date: parseInt(match[2]),
-							year: ((match.length == 4) ? match[3] : undefined)
+
+				if (date && month && this.helpers.isValidDate(formattedString)) {
+
+					event.hasValidDate = true;
+
+					event.parsedText = event.parsedText.replace(match[0], formattedString);
+
+					event.parsedDates.push({
+							index: matches.index,
+							match: match[0],
+							formattedDate: formattedString,
+							hasYear: this.helpers.isNumeric(year),
+							date: {
+								month: month,
+								date: date,
+								year: year
+							}
 						}
-					}
-				);
-
+					);
+				}
 			}
 
 			// D M Y
@@ -507,26 +485,34 @@
 				event.isValidDate = true;
 
 				match = matches.filter(this.helpers.isUndefined);
+
 				this.patterns.dates.dmyStrings.lastIndex = matches.index + 1;
 
-				// changing to MM/DD || MM/DD/YYYY
-				formattedString =
-					(this.sets.month.indexOf(match[2]) + 1) + '/' + parseInt(match[1]) + ((match.length == 4) ?
-					'/' + match[3] : "");
+				date = (parseInt(match[1]) <= 31 && parseInt(match[1]) >= 1) ? parseInt(match[1]) : null;
+				month = (this.sets.month.indexOf(match[2]) >= 0) ? this.sets.month.indexOf(match[2]) + 1 : null;
+				year = ((match.length == 4) ? parseInt(match[3]) : null);
 
-				event.parsedText = event.parsedText.replace(match[0], formattedString);
+				formattedString = month + '/' + date + ((year) ? '/' + year : '');
 
-				event.parsedDates.push({
-					index: event.preConvertedString.indexOf(match[0]),
-					match: match[0],
-					formattedDate: formattedString,
-					hasYear: match.length == 4,
-					date: {
-						month: (this.sets.month.indexOf(match[2]) + 1),
-						date: parseInt(match[1]),
-						year: (match.length == 4) ? match[3] : undefined
-					}
-				});
+				if (date && month && this.helpers.isValidDate(formattedString)) {
+
+					event.hasValidDate = true;
+
+					event.parsedText = event.parsedText.replace(match[0], formattedString);
+
+					event.parsedDates.push({
+							index: matches.index,
+							match: match[0],
+							formattedDate: formattedString,
+							hasYear: this.helpers.isNumeric(year),
+							date: {
+								month: month,
+								date: date,
+								year: year
+							}
+						}
+					);
+				}
 			}
 
 			// sort parsed dates in incremental order.
@@ -580,7 +566,7 @@
 		},
 
 		parseRelativeDates: function (event) {
-			//console.log('parsing: ', event.parsedText);
+
 			var matches, match, targetDate, formattedString, relPrefix, relSuffix;
 
 			var now = this.getNow();
@@ -589,7 +575,7 @@
 			// Day after tomorrow (should be only one mention, ok?)
 			if (matches = event.parsedText.match(this.patterns.dates.relative.dayAfter)) {
 
-				targetDate =  new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
+				targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 2);
 				formattedString = (targetDate.getMonth() + 1) + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
 
 				event.parsedText = event.parsedText.replace(matches[0], formattedString);
@@ -677,7 +663,6 @@
 								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
 
 							} else if (relPrefix.last) {
-								//console.log('got last');
 
 
 							} else if (relPrefix.number) {
@@ -715,7 +700,6 @@
 							}
 							break;
 						default:
-							//console.log('wat?');
 							break;
 					}
 				}
@@ -737,7 +721,6 @@
 					});
 				}
 
-				//console.log(targetDate, event);
 
 				return event;
 			}
@@ -756,7 +739,7 @@
 					formattedString = event.parsedDates[0].date.month + '/' + match[1] + ((event.parsedDates[0].hasYear) ? '/' + event.parsedDates[0].date.year : '') + ' ' + match[2] + ' ' + match[3];
 					event.parsedText = event.parsedText.replace(match[0], formattedString);
 				} else {
-					console.warn('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
+					// console.warn('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
 				}
 
 				event.parsedDates.push({
@@ -780,7 +763,7 @@
 					formattedString = match[1] + ' ' + match[2] + ' ' + event.parsedDates[0].date.month + '/' + match[3] + ((event.parsedDates[0].hasYear) ? '/' + event.parsedDates[0].date.year : '');
 					event.parsedText = event.parsedText.replace(match[0], formattedString);
 				} else {
-					console.warn('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
+					//console.warn('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
 				}
 
 				event.parsedDates.push({
@@ -871,12 +854,15 @@
 			event.parsedTitle = event.parsedTitle.replace(this.patterns.times.formatted, '');
 			event.parsedTitle = event.parsedTitle.replace(/ +(?= )/g, '').trim(); // remove multiple spaces
 
+			/*
+			// works with chrome only
 			console.groupCollapsed('Parser found Dates (' + event.parsedDates.length + ') and Times (' + event.parsedTimes.length + ')');
 			console.info('Dates: ' + event.parsedDates.length);
 			console.dir(event.parsedDates);
 			console.info('Times: ' + event.parsedTimes.length);
 			console.dir(event.parsedTimes);
 			console.groupEnd();
+			*/
 
 			if (!event.startDate) {
 
@@ -979,7 +965,6 @@
 
 						event.startDate = null;
 
-						//console.info('No dates and times detected');
 						event.isValidDate = false;
 					}
 				}
@@ -987,8 +972,8 @@
 
 			return {
 				title: event.parsedTitle.trim(),
-				startDate: (event.startDate instanceof Date) ? new Date(event.startDate) : "",
-				endDate: (event.endDate instanceof Date) ? new Date(event.endDate) : "",
+				startDate: (event.startDate instanceof Date) ? new Date(event.startDate) : undefined,
+				endDate: (event.endDate instanceof Date) ? new Date(event.endDate) : undefined,
 				allDay: event.allDay,
 				isRecurrent: event.isRecurrent
 				// Recurrencies: event.parsedRecurrencies
@@ -1133,9 +1118,28 @@
 				return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + daysUntilNext);
 
 			},
+			isValidDate: function (s) {
+				var bits = s.split('/');
+
+				// mm/dd/yy
+				var y = bits[2], m = bits[0], d = bits[1];
+				// Assume not leap year by default (note zero index for Jan)
+				var daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+				// If evenly divisible by 4 and not evenly divisible by 100,
+				// or is evenly divisible by 400, then a leap year
+				if ((!(y % 4) && y % 100) || !(y % 400)) {
+					daysInMonth[1] = 29;
+				}
+				return d <= daysInMonth[--m]
+			},
 
 			isSameDay: function (date1, date2) {
 				return date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate() && date1.getFullYear() === date2.getFullYear();
+			},
+
+			isNumeric(n) {
+				return (!isNaN(parseFloat(n)) && isFinite(n));
 			}
 		}
 	};
