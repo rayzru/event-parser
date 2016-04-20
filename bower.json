@@ -2,7 +2,7 @@
   "name": "event-parser.js",
   "version": "0.0.13",
   "description": "Natural-language event parser for Javascript.",
-  "main": "dist/event-parser.js",
+  "main": "src/event-parser.js",
   "authors": [
     "Andrew `RayZ` Rumm"
   ],
