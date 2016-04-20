@@ -2,6 +2,8 @@
  * Event Parser
  * Natural Language Processing library for parsing event-related text into event object.
  * @author Andrew "RayZ" Rumm
+ *
+ *
  * */
 
 (function () {
@@ -562,7 +564,7 @@
 			var matches, match, targetDate, formattedString, relPrefix;
 
 			var now = this.getNow();
-			//noinspection JSDuplicatedDeclaration
+
 
 			// Day after tomorrow (should be only one mention, ok?)
 			if (matches = event.parsedText.match(this.patterns.dates.relative.dayAfter)) {
@@ -1022,7 +1024,7 @@
 					var parts, number;
 					//var matches = this.patterns.numbers.normal.exec(string);
 
-					//noinspection JSValidateTypes
+
 					parts = string.split(/\s|-/g);
 
 					if (parts.length = 2) {
@@ -1147,7 +1149,7 @@
 				return date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate() && date1.getFullYear() === date2.getFullYear();
 			},
 
-			isNumeric(n) {
+			isNumeric: function(n) {
 				return (!isNaN(parseFloat(n)) && isFinite(n));
 			},
 
