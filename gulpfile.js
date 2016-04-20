@@ -7,6 +7,7 @@ var karma = require('karma').Server;
 
 gulp.task('js', function () {
 	return gulp.src('src/*.js')
+		.pipe(concat('event-parser.min.js'))
 		.pipe(uglify())
 		.pipe(gulp.dest('dist'));
 });
