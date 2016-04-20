@@ -12,13 +12,12 @@ Event Parser
 
 
 ##Achtung
-Library is still in development. All features not implemented fully. Feel free to submit bugs, unit tests that not working well, and suggest improovements as well.
+Library is in development. All features not implemented yet. Feel free to submit bugs, unit tests, and suggest improvements as well.
 
 ##Usage
 
 ```javascript
 var event = "Have fun with Jane at home on 11th dec".parseEvent();
-
 
 ```
 
