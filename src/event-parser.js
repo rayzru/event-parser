@@ -118,12 +118,10 @@
 				formatted: /(?:(?:on|at)\s)?\b[^\/\d+](\d{1,2})\/(\d{1,2})(?:\/(\d{4}|\d{2}))?(?!\/)\b/gi,
 
 				// june 12, june 12th, june 12th 2001, "june 12th, of 2001"
-				// todo: add THE, AT, ON in front of detection block
-				mdyStrings: /(?:(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:(?:\s?,)?\s?of)?\s?(\d{1,2}(?:\s)?(?:|th|st|nd|rd)?)\b)(?:(?:\s?,)?(?:\s?of\s?)?(?:\s)?(20\d{2}|\d{2}[6-9]\d+))?)/gi,
+				mdyStrings: /(?:(?:on|at)\s)?(?:(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:(?:\s?,)?\s?of)?\s?(\d{1,2}(?:\s)?(?:th|st|nd|rd)?)(?!(:|(?:\s+)?am|(?:\s+)?pm))\b)(?:(?:\s?,)?(?:\s?of\s?)?(?:\s)?(20\d{2}|\d{2}[6-9]\d+))?)/gi,
 
 				//12 july, 12th of july, 12th of july of 2012
-				// todo: add THE, AT, ON in front of detection block
-				dmyStrings: /(?:(\d{1,2}(?:\s)?(?:|th|st|nd|rd)?)\b(?:\sof\s)?\s?(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:\s?,)?(?:\s?of\s?)?(20\d{2}|\d{2}[6-9]\d+))?)/gi,
+				dmyStrings: /(?:(?:on|at)\s)?(?:(\d{1,2}(?:\s)?(?:|th|st|nd|rd)?)\b(?:\sof\s)?\s?(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:\s?,)?(?:\s?of\s?)?(20\d{2}|\d{2}[6-9]\d+))?)/gi,
 
 				// relative closest dates aliases
 				// on friday, on other friday, at monday, at next monday, tomorrow, today, at 2nd tuesday
@@ -715,10 +713,8 @@
 					});
 				}
 
-
 				return event;
 			}
-
 
 			return event;
 		},
