@@ -722,30 +722,40 @@
 
 		parseDateRanges: function (event) {
 
-			var formattedString, match, matches;
+			var formattedString,replacement, match, matches, date, month, year;
 
 			while (matches = this.patterns.dates.ranges.from.exec(event.parsedText)) {
 
 				match = matches.filter(this.helpers.isUndefined);
 
 				if (event.parsedDates.length == 1) {
-					formattedString = event.parsedDates[0].date.month + '/' + match[1] + ((event.parsedDates[0].hasYear) ? '/' + event.parsedDates[0].date.year : '') + ' ' + match[2] + ' ' + match[3];
-					event.parsedText = event.parsedText.replace(match[0], formattedString);
-				} else {
-					// console.warn('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
-				}
 
-				event.parsedDates.push({
-					index: event.preConvertedString.indexOf(matches[0]),
-					match: matches[0],
-					formattedDate: event.parsedDates[0].date.month + '/' + match[1] + ((event.parsedDates[0].hasYear) ? '/' + event.parsedDates[0].date.year : ''),
-					date: {
-						month: event.parsedDates[0].date.month,
-						date: parseInt(match[1]),
-						year: event.parsedDates[0].date.year
+					date = (parseInt(match[1]) <= 31 && parseInt(match[1]) >= 1) ? parseInt(match[1]) : null;
+					month = event.parsedDates[0].date.month;
+					year = ((event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : null);
+
+					formattedString = month + '/' + date + ((year) ? '/' + year : '');
+					if (date && month && this.helpers.isValidDate(formattedString)) {
+						replacement = month + '/' + date + ((year) ? '/' + year : '') + ' ' + match[2] + ' ' + match[3];
+						event.parsedText = event.parsedText.replace(match[0], replacement);
+
+						event.parsedDates.push({
+							index: event.preConvertedString.indexOf(matches[0]),
+							match: matches[0],
+							formattedDate: month + '/' + date + ((year) ? '/' + year : ''),
+							hasYear: event.parsedDates[0].hasYear,
+							date: {
+								month: month,
+								date: date,
+								year: year
+							}
+						});
+
 					}
-				});
-
+				} else {
+					// todo: sure this is bad behaviour, i shouldnt relate to stupid logic that there is just one dates were parsed. I should get related date by match index position
+					console.error('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
+				}
 			}
 
 			while (matches = this.patterns.dates.ranges.to.exec(event.parsedText)) {
@@ -753,22 +763,36 @@
 				match = matches.filter(this.helpers.isUndefined);
 
 				if (event.parsedDates.length == 1) {
-					formattedString = match[1] + ' ' + match[2] + ' ' + event.parsedDates[0].date.month + '/' + match[3] + ((event.parsedDates[0].hasYear) ? '/' + event.parsedDates[0].date.year : '');
-					event.parsedText = event.parsedText.replace(match[0], formattedString);
+
+
+					date = (parseInt(match[1]) <= 31 && parseInt(match[1]) >= 1) ? parseInt(match[1]) : null;
+					month = event.parsedDates[0].date.month;
+					year = ((event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : null);
+
+					formattedString = month + '/' + date + ((year) ? '/' + year : '');
+					if (date && month && this.helpers.isValidDate(formattedString)) {
+						replacement = match[1] + ' ' + match[2] + ' ' + event.parsedDates[0].date.month + '/' + match[3] + ((event.parsedDates[0].hasYear) ? '/' + event.parsedDates[0].date.year : '');
+						event.parsedText = event.parsedText.replace(match[0], replacement);
+					}
+
+					event.parsedDates.push({
+						index: event.preConvertedString.indexOf(matches[0]),
+						match: matches[0],
+						formattedDate: month + '/' + date + ((year) ? '/' + year : ''),
+						hasYear: event.parsedDates[0].hasYear,
+						date: {
+							month: month,
+							date: date,
+							year: year
+						}
+					});
+
 				} else {
-					//console.warn('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
+					// todo: sure this is bad behaviour, i shouldnt relate to stupid logic that there is just one dates were parsed. I should get related date by match index position
+					console.error('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
 				}
 
-				event.parsedDates.push({
-					index: event.preConvertedString.indexOf(matches[0]),
-					match: matches[0],
-					formattedDate: event.parsedDates[0].date.month + '/' + match[3] + ((event.parsedDates[0].hasYear) ? '/' + event.parsedDates[0].date.year : ''),
-					date: {
-						month: event.parsedDates[0].date.month,
-						date: parseInt(match[3]),
-						year: event.parsedDates[0].date.year
-					}
-				});
+
 
 			}
 
