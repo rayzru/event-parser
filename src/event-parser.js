@@ -723,7 +723,7 @@
 
 		parseDateRanges: function (event) {
 
-			var formattedString,replacement, match, matches, date, month, year;
+			var formattedString, replacement, match, matches, date, month, year;
 
 			while (matches = this.patterns.dates.ranges.from.exec(event.parsedText)) {
 
@@ -794,7 +794,6 @@
 				}
 
 
-
 			}
 
 			return event;
@@ -832,6 +831,7 @@
 
 			event = this.parseDateRanges(event);
 
+			//sort dates
 
 			//
 			// Finalize dates, make ajustements
@@ -843,15 +843,18 @@
 			event.parsedTitle = event.parsedTitle.replace(this.patterns.times.formatted, '');
 			event.parsedTitle = event.parsedTitle.replace(/ +(?= )/g, '').trim(); // remove multiple spaces
 
+			// get parsedDates in order. Incomplete date range parser can makes it following in wrong order.
+			event.parsedDates = event.parsedDates.sort(this.helpers.sortByParsedDates);
+
 			/*
-			// works with chrome only
-			console.groupCollapsed('Parser found Dates (' + event.parsedDates.length + ') and Times (' + event.parsedTimes.length + ')');
-			console.info('Dates: ' + event.parsedDates.length);
-			console.dir(event.parsedDates);
-			console.info('Times: ' + event.parsedTimes.length);
-			console.dir(event.parsedTimes);
-			console.groupEnd();
-			*/
+			 // works with chrome only
+			 console.groupCollapsed('Parser found Dates (' + event.parsedDates.length + ') and Times (' + event.parsedTimes.length + ')');
+			 console.info('Dates: ' + event.parsedDates.length);
+			 console.dir(event.parsedDates);
+			 console.info('Times: ' + event.parsedTimes.length);
+			 console.dir(event.parsedTimes);
+			 console.groupEnd();
+			 */
 
 			if (!event.startDate) {
 
@@ -1146,6 +1149,15 @@
 
 			isNumeric(n) {
 				return (!isNaN(parseFloat(n)) && isFinite(n));
+			},
+
+			sortByParsedDates: function (a, b) {
+				var aDate = new Date((a.hasYear) ? a.date.year : new Date().getFullYear(), a.date.month, a.date.date);
+				var bDate = new Date((b.hasYear) ? b.date.year : new Date().getFullYear(), b.date.month, b.date.date);
+
+				if (aDate < bDate) return -1;
+				else if (aDate > bDate) return 1;
+				else return 0;
 			}
 		}
 	};

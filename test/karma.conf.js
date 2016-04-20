@@ -15,7 +15,7 @@ module.exports = function (config) {
 
 		// list of files / patterns to load in the browser
 		files: [
-			'src/*.js',
+			'src/event-parser.js',
 			'https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.12.0/moment-with-locales.min.js',
 			'test/unit/*.spec.js'
 		],
