@@ -115,7 +115,7 @@
 			// dates detectors
 			dates: {
 
-				formatted: /(?:(?:on|at)\s)?(\d{1,2})\/(\d{1,2})(?:\/(\d{4}|\d{2}))?/gi,
+				formatted: /(?:(?:on|at)\s)?\b[^\/\d+](\d{1,2})\/(\d{1,2})(?:\/(\d{4}|\d{2}))?(?!\/)\b/gi,
 
 				// june 12, june 12th, june 12th 2001, "june 12th, of 2001"
 				// todo: add THE, AT, ON in front of detection block
