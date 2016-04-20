@@ -2,17 +2,6 @@
  * Event Parser
  * Natural Language Processing library for parsing event-related text into event object.
  * @author Andrew "RayZ" Rumm
- *
- * The way it works:
- * 1) convert all known shortens on to full word representations: dec->december, nov->november
- * 2) convert all times into 24hour-format
- * 3) interpret all related dates and times into real one
- * 4) parse and remove recurrent parts from source string for futurer parses. Parse and get exceptions.
- * work is not finished yet
- *
- *
- * TODO: make library as String.prototype.parseEvent({config});
- *
  * */
 
 (function () {
@@ -154,12 +143,12 @@
 
 			// todo: add AT, ON in front of detection block
 			times: {
-				formatted: /((?:(?:at|on)\s)?(?:\d{1,2})(?:\:)(?:\d{2}))/gi,
-				singleInstances: /(?:(?:at|on)?(\d{1,2})(?:(?:\:)(\d{2}))(?:(?:\s)?(am|pm))?|(\d{1,2})(?:\s)?(am|pm))/gi,
+				formatted: /((?:(?:at|on)\s)?(?:\d{1,2})(?::)(?:\d{2}))/gi,
+				singleInstances: /(?:(?:at|on)?(\d{1,2})(?:(?::)(\d{2}))(?:(?:\s)?(am|pm))?|(\d{1,2})(?:\s)?(am|pm))/gi,
 
 				fullRanges: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?:\:)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?::)(\\d{2}))', 'gi'),
 				partialX2Time: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?:\:)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?:\\:)(\\d{2}))', 'gi'),
-				partialTime2X: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?:\:)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?:\\:)(\\d{2}))', 'gi'),
+				partialTime2X: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?:\:)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?:\\:)(\\d{2}))', 'gi')
 
 			},
 
@@ -208,8 +197,8 @@
 			holidays: [
 				[/(\bthanksgiving\b)/gi, 'every 4th thuesday of november'], 	// USA, but not Canada
 				[/\b(christmas|xmas|x-mas)\b/gi, '12/25'], 					// USA?
-				[/(\bnew\s?year(:?\'s)?(\seve)\b)/gi, '12/31 at 23:00'],
-				[/(\bnew\s?year(:?\'s)\b)/gi, '1/1'],
+				[/(\bnew\s?year(:?'s)?(\seve)\b)/gi, '12/31 at 23:00'],
+				[/(\bnew\s?year(:?'s)\b)/gi, '1/1'],
 				[/(\bapril\sfools\b)/gi, '4/1'],
 				[/(\bhalloween\b)/gi, '10/30']
 			]
@@ -218,7 +207,9 @@
 		this.now = undefined;
 
 		// using one EventParser instance
-		if (!(this instanceof EventParser )) return new EventParser(this.settings);
+		if (!(this instanceof EventParser )) {
+			return new EventParser(this.settings);
+		}
 
 		return this;
 	}
@@ -230,15 +221,15 @@
 		},
 
 		cleanup: function (source) {
-			var formattedString, match, matches;
+			var formattedString, match, matches, i;
 
 			// Complete uncompleted, shortened words, parts and abbrreveations.
-			for (var i = 0; i < this.patterns.nicers.length; i++) {
+			for (i = 0; i < this.patterns.nicers.length; i++) {
 				source = source.replace(this.patterns.nicers[i][0], this.patterns.nicers[i][1]);
 			}
 
 			//convert holidays
-			for (var i = 0; i < this.patterns.holidays.length; i++) {
+			for (i = 0; i < this.patterns.holidays.length; i++) {
 				source = source.replace(this.patterns.holidays[i][0], this.patterns.holidays[i][1]);
 			}
 
@@ -524,7 +515,7 @@
 		},
 
 		parseTimes: function (event) {
-			var hours, minutes, meridian, match, matches;
+			var hours, minutes, meridian, match, matches, formattedString;
 
 			while (matches = this.patterns.times.singleInstances.exec(event.parsedText)) {
 				//if (this.patterns.dates.singleInstances.lastIndex) console.log(this.patterns.dates.singleInstances.lastIndex);
@@ -567,10 +558,10 @@
 
 		parseRelativeDates: function (event) {
 
-			var matches, match, targetDate, formattedString, relPrefix, relSuffix;
+			var matches, match, targetDate, formattedString, relPrefix;
 
 			var now = this.getNow();
-			var targetDate = now;
+			//noinspection JSDuplicatedDeclaration
 
 			// Day after tomorrow (should be only one mention, ok?)
 			if (matches = event.parsedText.match(this.patterns.dates.relative.dayAfter)) {
@@ -731,6 +722,8 @@
 
 		parseDateRanges: function (event) {
 
+			var formattedString, match, matches;
+
 			while (matches = this.patterns.dates.ranges.from.exec(event.parsedText)) {
 
 				match = matches.filter(this.helpers.isUndefined);
@@ -785,8 +778,6 @@
 		parse: function (source) {
 
 			if (!source) throw "Nothng to parse";
-
-			var matches;
 
 			// store preformatted sting to store date index positions
 
@@ -1018,6 +1009,7 @@
 					var parts, number;
 					//var matches = this.patterns.numbers.normal.exec(string);
 
+					//noinspection JSValidateTypes
 					parts = string.split(/\s|-/g);
 
 					if (parts.length = 2) {

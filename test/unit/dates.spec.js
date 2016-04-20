@@ -43,6 +43,4 @@ describe("Dates", function() {
 		expect(el.startDate).toBeUndefined();
 	});
 
-
-
 });
