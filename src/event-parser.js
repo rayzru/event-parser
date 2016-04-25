@@ -14,7 +14,11 @@
 		// Default configuration
 		this.defaults = {
 			sourceText: null,
-			weekStart: 'sunday' // monday|sunday;
+			weekStart: 'sunday', // monday|sunday;
+			
+			// callbacks
+			onDateParsed: function() {},
+			onTimeParsed: function() {}
 		};
 
 		// data object
@@ -428,6 +432,8 @@
 							}
 						}
 					);
+
+					this.settings.onDateParsed();
 				}
 
 			}
@@ -466,6 +472,8 @@
 							}
 						}
 					);
+
+					this.settings.onDateParsed();
 				}
 			}
 
@@ -503,6 +511,9 @@
 							}
 						}
 					);
+
+					this.settings.onDateParsed();
+
 				}
 			}
 
@@ -565,6 +576,9 @@
 							minutes: minutes
 						}
 					});
+
+					this.settings.onTimeParsed();
+
 				}
 			}
 
@@ -623,6 +637,8 @@
 						year: targetDate.getFullYear()
 					}
 				});
+
+				this.settings.onDateParsed();
 			}
 
 
@@ -725,6 +741,9 @@
 							year: targetDate.getFullYear()
 						}
 					});
+
+					this.settings.onDateParsed();
+
 				}
 
 				return event;
@@ -764,6 +783,9 @@
 							}
 						});
 
+						this.settings.onDateParsed();
+
+
 					}
 				} else {
 					// todo: sure this is bad behaviour, i shouldnt relate to stupid logic that there is just one dates were parsed. I should get related date by match index position
@@ -799,6 +821,9 @@
 							year: year
 						}
 					});
+
+					this.settings.onDateParsed();
+
 
 				} else {
 					// todo: sure this is bad behaviour, i shouldnt relate to stupid logic that there is just one dates were parsed. I should get related date by match index position
