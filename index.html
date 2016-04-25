@@ -84,7 +84,10 @@
 				var inputString = $(this).val();
 				var e = inputString.parseEvent({
 					onTimeParsed: function() {
-						console.log('Time Parsed!!!');
+						console.log('Time Parsed');
+					},
+					onDateParsed: function() {
+						console.log('Date Parsed');
 					}
 				});
 

@@ -12,29 +12,26 @@
 	function EventParser(config) {
 
 		// Default configuration
-		this.defaults = {
+		var defaults = {
 			sourceText: null,
 			weekStart: 'sunday', // monday|sunday;
-			
-			// callbacks
-			onDateParsed: function() {},
-			onTimeParsed: function() {}
+
+			onDateParsed: function () {
+				// callback triggered on date parsed event.
+			},
+
+			onTimeParsed: function () {
+				// callback triggered on time parsed event.
+			}
 		};
 
-		// data object
-		this.event = {};
-
 		// checking given configuration
-		if (typeof config === "string") {
-			return this.parse(config);
-		} else if (typeof config === "object") {
-			this.settings = this.helpers.extend({}, this.defaults, config);
-		}
+		this.settings = this.helpers.extend({}, defaults, config);
+
 
 		// Avoid clobbering the window scope
 		// possibly it;s not necessary
 		if (window === this) return new EventParser(config);
-
 
 		// event object template
 		this.eventTemplate = {
@@ -433,7 +430,9 @@
 						}
 					);
 
-					this.settings.onDateParsed();
+					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+						this.settings.onDateParsed();
+					}
 				}
 
 			}
@@ -473,7 +472,9 @@
 						}
 					);
 
-					this.settings.onDateParsed();
+					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+						this.settings.onDateParsed();
+					}
 				}
 			}
 
@@ -512,7 +513,9 @@
 						}
 					);
 
-					this.settings.onDateParsed();
+					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+						this.settings.onDateParsed();
+					}
 
 				}
 			}
@@ -577,7 +580,9 @@
 						}
 					});
 
-					this.settings.onTimeParsed();
+					if (this.settings.onTimeParsed && typeof(this.settings.onTimeParsed) === "function") {
+						this.settings.onTimeParsed();
+					}
 
 				}
 			}
@@ -638,7 +643,9 @@
 					}
 				});
 
-				this.settings.onDateParsed();
+				if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+					this.settings.onDateParsed();
+				}
 			}
 
 
@@ -742,7 +749,9 @@
 						}
 					});
 
-					this.settings.onDateParsed();
+					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+						this.settings.onDateParsed();
+					}
 
 				}
 
@@ -783,7 +792,9 @@
 							}
 						});
 
-						this.settings.onDateParsed();
+						if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+							this.settings.onDateParsed();
+						}
 
 
 					}
@@ -822,8 +833,9 @@
 						}
 					});
 
-					this.settings.onDateParsed();
-
+					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+						this.settings.onDateParsed();
+					}
 
 				} else {
 					// todo: sure this is bad behaviour, i shouldnt relate to stupid logic that there is just one dates were parsed. I should get related date by match index position
@@ -843,8 +855,6 @@
 			// store preformatted sting to store date index positions
 
 			var event = JSON.parse(JSON.stringify(this.eventTemplate));
-			//new Object(); //= extend({}, this.eventTemplate);
-			//this.event = event;
 
 			event.parsedText = source;
 			event.parsedText = this.cleanup(event.parsedText);
@@ -1205,7 +1215,6 @@
 	};
 
 	String.prototype.parseEvent = function (config) {
-		config = config || undefined;
 		var ep = new EventParser(config);
 		return ep.parse(this);
 	};
