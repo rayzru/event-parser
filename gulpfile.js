@@ -6,15 +6,14 @@ var karma = require('karma').Server;
 
 
 gulp.task('js', function () {
-	return gulp.src('src/event-parser.js')
+	return gulp.src('src/*.js')
 		.pipe(concat('event-parser.min.js'))
 		.pipe(uglify())
-		.pipe(gulp.dest('dist'))
-		.pipe(notify({ message: 'Finished minifying JavaScript'}));
+		.pipe(gulp.dest('dist'));
 });
 
 gulp.task('watch', function () {
-	gulp.watch('src/event-parser.js', ['js']);
+	gulp.watch('src/**/*.js', ['js']);
 });
 
 gulp.task('test', function (done) {

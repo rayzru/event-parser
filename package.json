@@ -1,9 +1,9 @@
 {
   "name": "event-parser.js",
-  "version": "0.0.12",
+  "version": "0.0.17",
   "author": "Andrew RayZ Rumm",
   "description": "Natural-language event parser for Javascript.",
-  "main": "dist/event-parser.js",
+  "main": "src/event-parser.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/rayzru/event-parser.git"
