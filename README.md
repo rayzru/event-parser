@@ -17,17 +17,29 @@ Library is in development. All features not implemented yet. Feel free to submit
 ##Usage
 
 ```javascript
-var event = "Have fun with Jane at home on 11th dec".parseEvent();
+var event = "Have fun with Jane at home on 11th dec".parseEvent({
+
+	// Options
+
+	// callback called after parse is done;
+	onParsed: function() {},
+
+   	// callback called after each instance of date is parsed;
+    onDateParsed: function () {},
+
+   	// callback called after each instance of time is parsed;
+    onTimeParsed: function () {}
+});
 
 ```
 
 ```javascript
 {
-	   title: "Have fun with Jane at home at 12 dec 2020",
-	   startDate: "‌Sun Dec 12 2020 00:00:00 GMT+0300",
-	   endDate: undefined,
-	   allDay: true,
-	   isRecurrent: false
+	title: "Have fun with Jane at home at 12 dec 2020",
+	startDate: "‌Sun Dec 12 2020 00:00:00 GMT+0300",
+	endDate: undefined,
+	allDay: true,
+	isRecurrent: false
 }
 ````
 
