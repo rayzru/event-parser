@@ -141,7 +141,6 @@
 				}
 			},
 
-			// todo: add AT, ON in front of detection block
 			times: {
 				formatted: /((?:(?:at|on)\s)?(?:\d{1,2})(?::)(?:\d{2}))/gi,
 				singleInstances: /(?:(?:at|on)?(\d{1,2})(?:(?::)(\d{2}))(?:(?:\s)?(am|pm))?|(\d{1,2})(?:\s)?(am|pm))/gi,
@@ -525,21 +524,36 @@
 
 				match = matches.filter(this.helpers.isUndefined);
 				if (match.length >= 3) {
-					if (match[match.length - 1] === 'am' || match[match.length - 1] === 'pm') {
-						meridian = match[match.length - 1];
 
+					if (match[match.length - 1].toLowerCase() === 'am' || match[match.length - 1].toLowerCase() === 'pm') {
+
+						if (
+							parseInt(match[1]) > 12 ||
+							parseInt(match[1]) < 0 ||
+							(match.length == 3 &&
+							(parseInt(match[2]) > 59 ||
+							parseInt(match[2]) < 0))
+						) continue;
+
+						meridian = match[match.length - 1].toLowerCase();
 						hours = (meridian == 'am' && parseInt(match[1]) == 12) ? 0 :
 							(meridian == 'pm' && parseInt(match[1]) < 12) ? parseInt(match[1]) + 12 :
 								parseInt(match[1]);
 						minutes = (match.length == 3) ? 0 : parseInt(match[2]);
 					} else {
+						if (
+							parseInt(match[1]) > 23 ||
+							parseInt(match[1]) < 0 ||
+							parseInt(match[2]) > 59 ||
+							parseInt(match[2]) < 0
+						) continue;
+						meridian = undefined;
 						hours = parseInt(match[1]);
 						minutes = parseInt(match[2]);
 					}
 
 					formattedString = this.helpers.padNumberWithZeroes(hours, 2) + ':' + this.helpers.padNumberWithZeroes(minutes, 2);
 					event.parsedText = event.parsedText.replace(match[0], formattedString);
-
 
 					event.parsedTimes.push({
 						index: matches.index,
@@ -876,7 +890,7 @@
 						if (event.parsedTimes.length == 2) {
 
 							// suggest time is sheduled on the next day when last hours are less that prevoious.
-							var suggestDayDelta = (parseFloat(event.parsedTimes[0].time.hours + '.' + event.parsedTimes[0].time.minutes) > parseFloat(event.parsedTimes[1].time.hours + '.' +event.parsedTimes[1].time.minutes)) ? 1 : 0;
+							var suggestDayDelta = (parseFloat(event.parsedTimes[0].time.hours + '.' + event.parsedTimes[0].time.minutes) > parseFloat(event.parsedTimes[1].time.hours + '.' + event.parsedTimes[1].time.minutes)) ? 1 : 0;
 
 							if (event.parsedDates.length == 1) {
 								event.endDate =
@@ -1150,7 +1164,7 @@
 				return date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate() && date1.getFullYear() === date2.getFullYear();
 			},
 
-			isNumeric: function(n) {
+			isNumeric: function (n) {
 				return (!isNaN(parseFloat(n)) && isFinite(n));
 			},
 
