@@ -21,7 +21,7 @@
 		#source {
 			width: 100%;
 			padding: 5px;
-			border:  1px solid #ccc;
+			border: 1px solid #ccc;
 			-webkit-border-radius: 3px;
 			-moz-border-radius: 3px;
 			font-size: 26px;
@@ -46,15 +46,26 @@
 																			class="octicon octicon-link"></span></a>Usage
 	</h3>
 
-	<div class="highlight highlight-source-js"><pre><span class="pl-k">var</span> <span class="pl-c1">event</span> <span
-				class="pl-k">=</span> <span class="pl-pds">'<span class="pl-s">Pick up Dave on 6 of January at 6pm</span><span class="pl-pds">'</span></span>.<span class="pl-ent">parseEvent</span>()</pre>
-	</div>
+{% highlight javascript %}
+	var event = 'Pick up Dave on 6 of January at 6pm'.parseEvent({
+	// Options
+
+	// callback called after parse is done;
+	onParsed: function() {},
+
+	// callback called after each instance of date is parsed;
+	onDateParsed: function () {},
+
+	// callback called after each instance of time is parsed;
+	onTimeParsed: function () {}
+	})
+{% endhighlight %}
 
 	<h3>
 		<a id="test" class="anchor" href="#test" aria-hidden="true">
 			<span
-					aria-hidden="true"
-					class="octicon octicon-link"></span></a>Test
+				aria-hidden="true"
+				class="octicon octicon-link"></span></a>Test
 	</h3>
 
 	<div>
@@ -62,7 +73,7 @@
 			type="text"
 			class="form-control"
 			id="source"
-			value="New Event 20 April 17:00 - 20:00"
+			value="New Event 20 April 11:00 AM"
 			oldvalue="Pick up Dave on 6 of January at 6pm">
 	</div>
 	<div class="highlight highlight-source-js">
@@ -71,7 +82,7 @@
 
 	<footer class="site-footer">
 		<span class="site-footer-owner"><a href="https://github.com/rayzru/event-parser">event-parser.js</a> is maintained by <a
-				href="https://github.com/rayzru">Andrew "RayZ" Rumm</a></span>
+			href="https://github.com/rayzru">Andrew "RayZ" Rumm</a></span>
 	</footer>
 
 </section>
@@ -82,7 +93,14 @@
 			$('#source').on('keyup', function () {
 
 				var inputString = $(this).val();
-				var e = inputString.parseEvent();
+				var e = inputString.parseEvent({
+					onTimeParsed: function () {
+						console.log('Time Parsed');
+					},
+					onDateParsed: function () {
+						console.log('Date Parsed');
+					}
+				});
 
 				e.startDate = (e.startDate) ? moment(e.startDate).format() : undefined;
 				e.endDate = (e.endDate) ? moment(e.endDate).format() : undefined;

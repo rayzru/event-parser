@@ -12,25 +12,28 @@
 	function EventParser(config) {
 
 		// Default configuration
-		this.defaults = {
+		var defaults = {
 			sourceText: null,
-			weekStart: 'sunday' // monday|sunday;
+			weekStart: 'sunday', // monday|sunday;
+
+			onDateParsed: function () {
+				// callback triggered on date parsed event.
+			},
+
+			onTimeParsed: function () {
+				// callback triggered on time parsed event.
+			},
+
+			onParsed: function () {
+				// callback triggered on parsed event.
+			}
 		};
 
-		// data object
-		this.event = {};
-
-		// checking given configuration
-		if (typeof config === "string") {
-			return this.parse(config);
-		} else if (typeof config === "object") {
-			this.settings = this.helpers.extend({}, this.defaults, config);
-		}
-
 		// Avoid clobbering the window scope
-		// possibly it;s not necessary
 		if (window === this) return new EventParser(config);
 
+		// checking given configuration
+		this.settings = this.helpers.extend({}, defaults, config);
 
 		// event object template
 		this.eventTemplate = {
@@ -141,7 +144,6 @@
 				}
 			},
 
-			// todo: add AT, ON in front of detection block
 			times: {
 				formatted: /((?:(?:at|on)\s)?(?:\d{1,2})(?::)(?:\d{2}))/gi,
 				singleInstances: /(?:(?:at|on)?(\d{1,2})(?:(?::)(\d{2}))(?:(?:\s)?(am|pm))?|(\d{1,2})(?:\s)?(am|pm))/gi,
@@ -429,6 +431,10 @@
 							}
 						}
 					);
+
+					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+						this.settings.onDateParsed();
+					}
 				}
 
 			}
@@ -467,6 +473,10 @@
 							}
 						}
 					);
+
+					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+						this.settings.onDateParsed();
+					}
 				}
 			}
 
@@ -504,6 +514,11 @@
 							}
 						}
 					);
+
+					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+						this.settings.onDateParsed();
+					}
+
 				}
 			}
 
@@ -525,21 +540,36 @@
 
 				match = matches.filter(this.helpers.isUndefined);
 				if (match.length >= 3) {
-					if (match[match.length - 1] === 'am' || match[match.length - 1] === 'pm') {
-						meridian = match[match.length - 1];
 
+					if (match[match.length - 1].toLowerCase() === 'am' || match[match.length - 1].toLowerCase() === 'pm') {
+
+						if (
+							parseInt(match[1]) > 12 ||
+							parseInt(match[1]) < 0 ||
+							(match.length == 3 &&
+							(parseInt(match[2]) > 59 ||
+							parseInt(match[2]) < 0))
+						) continue;
+
+						meridian = match[match.length - 1].toLowerCase();
 						hours = (meridian == 'am' && parseInt(match[1]) == 12) ? 0 :
 							(meridian == 'pm' && parseInt(match[1]) < 12) ? parseInt(match[1]) + 12 :
 								parseInt(match[1]);
 						minutes = (match.length == 3) ? 0 : parseInt(match[2]);
 					} else {
+						if (
+							parseInt(match[1]) > 23 ||
+							parseInt(match[1]) < 0 ||
+							parseInt(match[2]) > 59 ||
+							parseInt(match[2]) < 0
+						) continue;
+						meridian = undefined;
 						hours = parseInt(match[1]);
 						minutes = parseInt(match[2]);
 					}
 
 					formattedString = this.helpers.padNumberWithZeroes(hours, 2) + ':' + this.helpers.padNumberWithZeroes(minutes, 2);
 					event.parsedText = event.parsedText.replace(match[0], formattedString);
-
 
 					event.parsedTimes.push({
 						index: matches.index,
@@ -551,6 +581,11 @@
 							minutes: minutes
 						}
 					});
+
+					if (this.settings.onTimeParsed && typeof(this.settings.onTimeParsed) === "function") {
+						this.settings.onTimeParsed();
+					}
+
 				}
 			}
 
@@ -609,6 +644,10 @@
 						year: targetDate.getFullYear()
 					}
 				});
+
+				if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+					this.settings.onDateParsed();
+				}
 			}
 
 
@@ -711,6 +750,11 @@
 							year: targetDate.getFullYear()
 						}
 					});
+
+					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+						this.settings.onDateParsed();
+					}
+
 				}
 
 				return event;
@@ -750,6 +794,11 @@
 							}
 						});
 
+						if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+							this.settings.onDateParsed();
+						}
+
+
 					}
 				} else {
 					// todo: sure this is bad behaviour, i shouldnt relate to stupid logic that there is just one dates were parsed. I should get related date by match index position
@@ -786,6 +835,10 @@
 						}
 					});
 
+					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+						this.settings.onDateParsed();
+					}
+
 				} else {
 					// todo: sure this is bad behaviour, i shouldnt relate to stupid logic that there is just one dates were parsed. I should get related date by match index position
 					console.error('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
@@ -804,8 +857,6 @@
 			// store preformatted sting to store date index positions
 
 			var event = JSON.parse(JSON.stringify(this.eventTemplate));
-			//new Object(); //= extend({}, this.eventTemplate);
-			//this.event = event;
 
 			event.parsedText = source;
 			event.parsedText = this.cleanup(event.parsedText);
@@ -876,7 +927,7 @@
 						if (event.parsedTimes.length == 2) {
 
 							// suggest time is sheduled on the next day when last hours are less that prevoious.
-							var suggestDayDelta = (parseFloat(event.parsedTimes[0].time.hours + '.' + event.parsedTimes[0].time.minutes) > parseFloat(event.parsedTimes[1].time.hours + '.' +event.parsedTimes[1].time.minutes)) ? 1 : 0;
+							var suggestDayDelta = (parseFloat(event.parsedTimes[0].time.hours + '.' + event.parsedTimes[0].time.minutes) > parseFloat(event.parsedTimes[1].time.hours + '.' + event.parsedTimes[1].time.minutes)) ? 1 : 0;
 
 							if (event.parsedDates.length == 1) {
 								event.endDate =
@@ -975,6 +1026,10 @@
 						event.isValidDate = false;
 					}
 				}
+			}
+
+			if (this.settings.onParsed && typeof(this.settings.onParsed) === "function") {
+				this.settings.onParsed();
 			}
 
 			return {
@@ -1150,7 +1205,7 @@
 				return date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate() && date1.getFullYear() === date2.getFullYear();
 			},
 
-			isNumeric: function(n) {
+			isNumeric: function (n) {
 				return (!isNaN(parseFloat(n)) && isFinite(n));
 			},
 
@@ -1166,7 +1221,6 @@
 	};
 
 	String.prototype.parseEvent = function (config) {
-		config = config || undefined;
 		var ep = new EventParser(config);
 		return ep.parse(this);
 	};
