@@ -706,7 +706,7 @@
 								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 8 - now.getDay(), 0, 0, 0);
 							} else if (relPrefix.self) {
 								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-								endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (8 - now.getDay()), 0, 0, 0);
+								endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (7 - now.getDay()), 0, 0, 0);
 							}
 							break;
 						case 'month':
@@ -914,16 +914,6 @@
 			// get parsedDates in order. Incomplete date range parser can makes it following in wrong order.
 			event.parsedDates = event.parsedDates.sort(this.helpers.sortByParsedDates);
 
-			/*
-			 // works with chrome only
-			 console.groupCollapsed('Parser found Dates (' + event.parsedDates.length + ') and Times (' + event.parsedTimes.length + ')');
-			 console.info('Dates: ' + event.parsedDates.length);
-			 console.dir(event.parsedDates);
-			 console.info('Times: ' + event.parsedTimes.length);
-			 console.dir(event.parsedTimes);
-			 console.groupEnd();
-			 */
-
 			if (!event.startDate) {
 
 				if (event.parsedDates.length) {
@@ -931,7 +921,6 @@
 					if (event.parsedTimes.length) {
 						// has times
 						event.allDay = false;
-
 
 						event.startDate =
 							new Date(
