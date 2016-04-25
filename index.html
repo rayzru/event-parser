@@ -46,20 +46,21 @@
 																			class="octicon octicon-link"></span></a>Usage
 	</h3>
 
-{% highlight javascript %}
+<div class="highlight"><pre>
 	var event = 'Pick up Dave on 6 of January at 6pm'.parseEvent({
-	// Options
 
-	// callback called after parse is done;
-	onParsed: function() {},
+		// Options
 
-	// callback called after each instance of date is parsed;
-	onDateParsed: function () {},
+		// callback called after parse is done;
+		onParsed: function() {},
 
-	// callback called after each instance of time is parsed;
-	onTimeParsed: function () {}
-	})
-{% endhighlight %}
+		// callback called after each instance of date is parsed;
+		onDateParsed: function () {},
+
+		// callback called after each instance of time is parsed;
+		onTimeParsed: function () {}
+	});
+</pre></div>
 
 	<h3>
 		<a id="test" class="anchor" href="#test" aria-hidden="true">
