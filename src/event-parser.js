@@ -594,7 +594,7 @@
 
 		parseRelativeDates: function (event) {
 
-			var matches, match, targetDate, formattedString, relPrefix;
+			var matches, match, targetDate, endDate, formattedString, relPrefix;
 
 			var now = this.getNow();
 
@@ -703,23 +703,27 @@
 							break;
 						case 'week':
 							if (relPrefix.next) {
-								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 7, 0, 0, 0);
+								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 8 - now.getDay(), 0, 0, 0);
+							} else if (relPrefix.self) {
+								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+								endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (8 - now.getDay()), 0, 0, 0);
 							}
 							break;
 						case 'month':
 							if (relPrefix.next) {
-								targetDate = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate(), 0, 0, 0);
-								formattedString = this.sets.month[now.getMonth() + 1];
-								event.parsedText = event.parsedText.replace(match[0], formattedString);
-								event = this.parseDates(event);
+								targetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0);
+								//formattedString = '1st of ' + this.sets.month[now.getMonth() + 1];
+								// event.parsedText = event.parsedText.replace(match[0], formattedString);
+								//event = this.parseDates(event);
 
 								//start parse from beginning
 								this.patterns.dates.relative.common.lastIndex = 0;
 							} else if (relPrefix.self) {
 								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-								formattedString = this.sets.month[now.getMonth()];
-								event.parsedText = event.parsedText.replace(match[0], formattedString);
-								event = this.parseDates(event);
+								endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 0, 0, 0);
+								//formattedString = this.sets.month[now.getMonth()];
+								//event.parsedText = event.parsedText.replace(match[0], formattedString);
+								//event = this.parseDates(event);
 
 								//start parse from beginning
 								this.patterns.dates.relative.common.lastIndex = 0;
@@ -736,20 +740,35 @@
 				}
 
 				if (!formattedString) {
-					formattedString = (targetDate.getMonth() + 1) + '/' + targetDate.getDate() + '/' + targetDate.getFullYear(); // MM/DD/YYYY
+					formattedString =
+						(targetDate.getMonth() + 1) + '/' + targetDate.getDate() + '/' + targetDate.getFullYear() +  // MM/DD/YYYY
+						((endDate instanceof Date) ? (' - ' + (endDate.getMonth() + 1) + '/' + endDate.getDate() + '/' + endDate.getFullYear()) : ''); // MM/DD/YYYY
+
 					event.parsedText = event.parsedText.replace(match[0], formattedString);
 
 					event.parsedDates.push({
 						index: event.preConvertedString.indexOf(match[0]),
 						match: match[0],
 						formattedDate: formattedString,
-						dt: new Date(targetDate),
 						date: {
 							month: targetDate.getMonth() + 1,
 							date: targetDate.getDate(),
 							year: targetDate.getFullYear()
 						}
 					});
+
+					if (endDate instanceof Date) {
+						event.parsedDates.push({
+							index: event.preConvertedString.indexOf(match[0]),
+							match: match[0],
+							formattedDate: formattedString,
+							date: {
+								month: endDate.getMonth() + 1,
+								date: endDate.getDate(),
+								year: endDate.getFullYear()
+							}
+						});
+					}
 
 					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
 						this.settings.onDateParsed();
@@ -1171,7 +1190,7 @@
 				var daysUntilNext = targetWeekday - currentWeekday + ((currentWeekday <= targetWeekday) ? 0 : 7);
 
 				if (relativeStates.next && currentWeekday == targetWeekday) daysUntilNext += 7;
-				if (relativeStates.self && currentWeekday == targetWeekday) daysUntilNext -= 7;
+				if (relativeStates.self && currentWeekday == targetWeekday) daysUntilNext = 0 ;
 
 				if (relativeStates.number) {
 					// parse suffix (1st monday, 11th saturday) as well

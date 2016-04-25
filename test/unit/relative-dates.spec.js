@@ -5,65 +5,68 @@ describe("Relative dates", function() {
 		el = "Meeting today".parseEvent();
 		now = moment().toDate();
 
-		expect(el.startDate.getDate())
-			.toEqual(now.getDate());
+		expect(el.startDate.toDateString()).toEqual(now.toDateString());
 	});
 
 	it("tomorrow", function() {
 
 		el = "Pickup Jane tomorrow for big ride".parseEvent();
-		now = moment().toDate();
 
-		expect(moment(el.startDate).toDate().toDateString())
-			.toEqual(moment(now).add(1, 'days').toDate().toDateString());
+		expect(el.startDate.toDateString())
+			.toEqual(moment().add(1, 'days').toDate().toDateString());
 
 		el = "Lunch with Nabi tomorrow at Sprinkle’s Cupcakes".parseEvent();
-		now = moment().toDate();
 
-		expect(moment(el.startDate).toDate().toDateString())
-			.toEqual(moment(now).add(1, 'days').toDate().toDateString());
+		expect(el.startDate.toDateString())
+			.toEqual(moment().add(1, 'days').toDate().toDateString());
 
 	});
 
 
 	it("in x days|weeks|", function() {
 
-		now = moment().toDate();
-
 		el = "Phone convo w/Jane in 2 days".parseEvent();
 
-		expect(moment(el.startDate).toDate().toDateString())
-			.toEqual(moment(now).add(2, 'days').toDate().toDateString());
+		expect(el.startDate.toDateString())
+			.toEqual(moment().add(2, 'days').toDate().toDateString());
 
-		now = moment().toDate();
 		el = "Sam birthday in 2 weeks".parseEvent();
 
-		expect(moment(el.startDate).toDate().toDateString())
-			.toEqual(moment(now).add(14, 'days').toDate().toDateString());
+		expect(el.startDate.toDateString())
+			.toEqual(moment().add(14, 'days').toDate().toDateString());
 
 	});
 
-	it('at specified weekday', function() {
-		now = moment().toDate();
+	it('at next week', function() {
+		el = "Event at next week".parseEvent();
+		expect(el.startDate.toDateString())
+			.toEqual(moment().add((8 - moment().day()), 'days').toDate().toDateString());
+	});
 
-		el = "Lunch on Friday with Crystal and Kim at Joan’s on Third".parseEvent();
+	it('at this week', function() {
+		el = "Event at this week".parseEvent();
+		expect(el.startDate.toDateString())
+			.toEqual(moment().toDate().toDateString());
 
-		expect(moment(el.startDate).toDate().toDateString())
-			.toEqual(
-				(moment(now).day() <= 5) ?
-					moment(now).day(5).toDate().toDateString() :
-					moment(now).day(5 + 7).toDate().toDateString()
-			);
+		expect(el.endDate.toDateString())
+			.toEqual(moment().add((7 - moment().day()), 'days').toDate().toDateString());
 
-		el = "Lunch on Monday with Crystal and Kim at Joan’s on Third".parseEvent();
+	});
 
-		expect(moment(el.startDate).toDate().toDateString())
-			.toEqual(
-				(moment(now).day() <= 1) ?
-					moment(now).day(1).toDate().toDateString() :
-					moment(now).day(1 + 7).toDate().toDateString()
-			);
+	it('at next month', function() {
+		el = "Event at next month".parseEvent();
+		expect(el.startDate.toDateString())
+			.toEqual(moment().endOf('month').add(1, 'days').toDate().toDateString());
+	});
 
+	it('at this month', function() {
+		el = "Event at this month".parseEvent();
+
+		expect(el.startDate.toDateString())
+			.toEqual(moment().toDate().toDateString());
+
+		expect(el.endDate.toDateString())
+			.toEqual(moment().endOf('month').add(-1, 'days').toDate().toDateString());
 	});
 
 
