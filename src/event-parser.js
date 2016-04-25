@@ -23,15 +23,17 @@
 			onTimeParsed: function () {
 				// callback triggered on time parsed event.
 			}
+
+			onParsed: function () {
+				// callback triggered on parsed event.
+			}
 		};
+
+		// Avoid clobbering the window scope
+		if (window === this) return new EventParser(config);
 
 		// checking given configuration
 		this.settings = this.helpers.extend({}, defaults, config);
-
-
-		// Avoid clobbering the window scope
-		// possibly it;s not necessary
-		if (window === this) return new EventParser(config);
 
 		// event object template
 		this.eventTemplate = {
@@ -1024,6 +1026,10 @@
 						event.isValidDate = false;
 					}
 				}
+			}
+
+			if (this.settings.onParsed && typeof(this.settings.onParsed) === "function") {
+				this.settings.onParsed();
 			}
 
 			return {
