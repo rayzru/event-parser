@@ -22,7 +22,7 @@
 
 			onTimeParsed: function () {
 				// callback triggered on time parsed event.
-			}
+			},
 
 			onParsed: function () {
 				// callback triggered on parsed event.
