@@ -66,7 +66,7 @@ describe("Relative dates", function() {
 			.toEqual(moment().toDate().toDateString());
 
 		expect(el.endDate.toDateString())
-			.toEqual(moment().endOf('month').add(-1, 'days').toDate().toDateString());
+			.toEqual(moment().endOf('month').add(0, 'days').toDate().toDateString());
 	});
 
 
