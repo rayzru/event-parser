@@ -19,16 +19,14 @@ Library is in development. All features not implemented yet. Feel free to submit
 ```javascript
 var event = "Have fun with Jane at home on 11th dec".parseEvent({
 
-	// Options
-
 	// callback called after parse is done;
 	onParsed: function() {},
 
    	// callback called after each instance of date is parsed;
-    onDateParsed: function () {},
+    onDateParsed: function (parsedDateArray) {},
 
    	// callback called after each instance of time is parsed;
-    onTimeParsed: function () {}
+    onTimeParsed: function (parsedTimeArray) {}
 });
 
 ```
