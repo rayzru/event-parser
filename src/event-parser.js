@@ -433,7 +433,7 @@
 					);
 
 					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
-						this.settings.onDateParsed();
+						this.settings.onDateParsed(event.parsedDates);
 					}
 				}
 
@@ -475,7 +475,7 @@
 					);
 
 					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
-						this.settings.onDateParsed();
+						this.settings.onDateParsed(event.parsedDates);
 					}
 				}
 			}
@@ -516,7 +516,7 @@
 					);
 
 					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
-						this.settings.onDateParsed();
+						this.settings.onDateParsed(event.parsedDates);
 					}
 
 				}
@@ -583,9 +583,8 @@
 					});
 
 					if (this.settings.onTimeParsed && typeof(this.settings.onTimeParsed) === "function") {
-						this.settings.onTimeParsed();
+						this.settings.onTimeParsed(event.parsedTimes);
 					}
-
 				}
 			}
 
@@ -646,7 +645,7 @@
 				});
 
 				if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
-					this.settings.onDateParsed();
+					this.settings.onDateParsed(event.parsedDates);
 				}
 			}
 
@@ -771,7 +770,7 @@
 					}
 
 					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
-						this.settings.onDateParsed();
+						this.settings.onDateParsed(event.parsedDates);
 					}
 
 				}
@@ -814,7 +813,7 @@
 						});
 
 						if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
-							this.settings.onDateParsed();
+							this.settings.onDateParsed(event.parsedDates);
 						}
 
 
@@ -855,7 +854,7 @@
 					});
 
 					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
-						this.settings.onDateParsed();
+						this.settings.onDateParsed(event.parsedDates);
 					}
 
 				} else {
