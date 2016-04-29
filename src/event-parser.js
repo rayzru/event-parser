@@ -79,30 +79,8 @@
 
 		this.patterns = {
 
-			//rangeSplitters: /(\bto\b|\-|\b(?:un)?till?\b|\bthrough\b|\bthru\b|\band\b|\bends?\b)/ig,
-			//weekdays: new RegExp(this.sets.weekday.join('|'), 'i'),
-			//recurrenceWeekdays: /(((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?\s?(?:,|and|&)?\s?){2,})/gi,
-			//recurrenceWords: /\b(each|every|\d+\s?times|weekdays|(year|month|week|dai|hour)ly|weekends|ann(?:iversary)?|(monday|tuesday|wednesday|thursday|friday|saturday|sunday)s)\b/i,
-
-			// todo: add dates numbers masks
-			// todo: add not listed atricules like on, at for ewxclusion
-
-			//recurrenceExpression: /(((?:at|on)?((every|each)?(?:\s)?((?:(\d+)(?:st|nd|rd|th))|first|next|last|other)?)(?:\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|((every|each)\s+?(?:other|last|first|next)?\s?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)|(weekday|weekend|week|month|day|year)))|((sunday|monday|tuesday|wednesday|thursday|friday|saturday)s|(dai|week|month|year)ly|weekends|weekdays))/gi,
 			recurrenceExpression: /((?:at|on)\s)?(((every|each)\s)?((((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?(?:\s)?(?:,|and|&)?\s?){2,})|((january|february|march|april|may|june|july|august|september|october|november|december)(?:\s)?(?:,|and|&)?\s?){2,}))|((every|each)\s(((?:((?:(twenty|thirty(?:-|\s))?(first|second|third|fourth|fifth|sixth|seventh|eighth|nineth|tenth|eleventh|twelfth|thirteenth|fourteenth|fifteenth|sixteenth|seventeenth|eighteenth|nineteenth))|(?:tenth|twentieth|thirtieth))|(\d+)(?:st|nd|rd|th))|next|last|other)?\s)?((sunday|monday|tuesday|wednesday|thursday|friday|saturday)(?:s)?|(january|february|march|april|may|june|july|august|september|october|november|december)|(weekday|weekend|week|month|day|year)))|(dai|week|month|year)ly|weekends|weekdays/gi,
-			/*recurrenceExpression: new RegExp('' +
-			 '((?:at|on)\\s)?' +
-			 '?(((every|each)\\s)?' +
-			 '((' +
-			 '((' + this.sets.weekday.join('|') + ')(?:s)?(?:\\s)?(?:,|and|&)\\s){2,})|' +
-			 '((' + this.sets.month.join('|') + ')?(?:\\s)?(?:,|and|&)\\s){2,}))|' +
-			 '', 'gi')*/
 
-			/*recurrenceTimes:
-			 new RegExp(
-
-			 ),*/
-
-			// todo: possible except rules, should be checked
 			recurrenceExcepts: /(?:except)(.+?)(?=on|at|with|from|to|(un)?till?)/gi,
 
 			numbers: {
@@ -118,7 +96,8 @@
 			// dates detectors
 			dates: {
 
-				formatted: /(?:(?:on|at)\s)?\b[^\/\d+](\d{1,2})\/(\d{1,2})(?:\/(\d{4}|\d{2}))?(?!\/)\b/gi,
+				// mm/dd[/yy[yy]]
+				formatted: /(?:(?:on|at)\s)?(?:\b(0?[1-9]|1[012])\/(0?[1-9]|[12][0-9]|3[01])(?:\/((?:19|20)?\d\d))?)\b(?!\/)/gi,
 
 				// june 12, june 12th, june 12th 2001, "june 12th, of 2001"
 				mdyStrings: /(?:(?:on|at)\s)?(?:(january|february|march|april|may|june|july|august|september|october|november|december)(?:(?:(?:\s?,)?\s?of)?\s?(\d{1,2}(?:\s)?(?:th|st|nd|rd)?)(?!(:|(?:\s+)?am|(?:\s+)?pm))\b)(?:(?:\s?,)?(?:\s?of\s?)?(?:\s)?(20\d{2}|\d{2}[6-9]\d+))?)/gi,
@@ -145,13 +124,12 @@
 			},
 
 			times: {
-				formatted: /((?:(?:at|on)\s)?(?:\d{1,2})(?::)(?:\d{2}))/gi,
-				singleInstances: /(?:(?:at|on)?(\d{1,2})(?:(?::)(\d{2}))(?:(?:\s)?(am|pm))?|(\d{1,2})(?:\s)?(am|pm))/gi,
+				formatted: /((?:(?:at|on)\s)?\b(?:\d{1,2})(?::)(?:\d{2}))/gi,
+				singleInstances: /(?:(?:at|on)?\b(\d{1,2})(?:(?::)(\d{2}))(?:(?:\s)?(am|pm))?|(\d{1,2})(?:\s)?(am|pm))/gi,
 
 				fullRanges: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?::)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?::)(\\d{2}))', 'gi'),
 				partialX2Time: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?::)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?:\\:)(\\d{2}))', 'gi'),
 				partialTime2X: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?::)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?:\\:)(\\d{2}))', 'gi')
-
 			},
 
 			// Nicers
@@ -253,7 +231,6 @@
 			while (matches = this.patterns.numbers.normal.exec(source)) {
 				match = matches.filter(this.helpers.isUndefined);
 				this.patterns.numbers.normal.lastIndex = matches.index + 1;
-				//?
 			}
 
 			// ordinal literal numbers
@@ -409,9 +386,21 @@
 
 				match = matches.filter(this.helpers.isUndefined);
 
-				date = (parseInt(match[1]) <= 31 && parseInt(match[1]) >= 1) ? parseInt(match[1]) : null;
-				month = (parseInt(match[0]) <= 12 && parseInt(match[0]) >= 1) ? parseInt(match[0]) : null;
-				year = ((match.length == 4) ? parseInt(match[3]) : null);
+				date = (parseInt(match[2]) <= 31 && parseInt(match[2]) >= 1) ? parseInt(match[2]) : null;
+				month = (parseInt(match[1]) <= 12 && parseInt(match[1]) >= 1) ? parseInt(match[1]) : null;
+
+				console.log(match);
+				// Suggest that 2-digits year is:
+				// < 70 : 2000-2069,
+				// >=70 : 1970-1999
+				year =
+					((match.length == 4) ?
+						(match[3].length == 4) ?
+							parseInt(match[3]) : (
+							parseInt(match[3]) < 70 ?
+							parseInt(match[3]) + 2000 :
+							parseInt(match[3]) + 1900 )
+						: null);
 
 				if (date && month && this.helpers.isValidDate(match[0])) {
 
@@ -436,7 +425,6 @@
 						this.settings.onDateParsed(event.parsedDates);
 					}
 				}
-
 			}
 
 			// M D Y
@@ -904,6 +892,8 @@
 			// Finalize dates, make ajustements
 			// ================================
 
+			console.log(event.parsedDates);
+
 			event.parsedTitle = event.parsedText;
 			event.parsedTitle = event.parsedTitle.replace(this.patterns.dates.ranges.formatted, '');
 			event.parsedTitle = event.parsedTitle.replace(this.patterns.dates.formatted, '');
@@ -1178,7 +1168,7 @@
 				var daysUntilNext = targetWeekday - currentWeekday + ((currentWeekday <= targetWeekday) ? 0 : 7);
 
 				if (relativeStates.next && currentWeekday == targetWeekday) daysUntilNext += 7;
-				if (relativeStates.self && currentWeekday == targetWeekday) daysUntilNext = 0 ;
+				if (relativeStates.self && currentWeekday == targetWeekday) daysUntilNext = 0;
 
 				if (relativeStates.number) {
 					// parse suffix (1st monday, 11th saturday) as well
