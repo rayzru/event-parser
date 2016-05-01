@@ -1,3 +1,4 @@
+/*eslint radix: ["error", "as-needed"]*/
 /*
  * Event Parser
  * Natural Language Processing library for parsing event-related text into event object.
@@ -7,6 +8,7 @@
  * */
 
 (function () {
+	'use strict';
 
 	// constructor
 	function EventParser(config) {
@@ -30,23 +32,25 @@
 		};
 
 		// Avoid clobbering the window scope
-		if (window === this) return new EventParser(config);
+		if (window === this) {
+			return new EventParser(config);
+		}
 
 		// checking given configuration
 		this.settings = this.helpers.extend({}, defaults, config);
 
 		// event object template
 		this.eventTemplate = {
-			sourceText: "",
-			parsedText: "",
-			parsedTitle: "",
+			sourceText: '',
+			parsedText: '',
+			parsedTitle: '',
 			parsedDates: [],
 			parsedTimes: [],
 			parsedNames: [],
 			parsedLocations: [],
 			parsedRecurrencies: [],
 
-			title: "",
+			title: '',
 			startDate: null,
 			endDate: null,
 
@@ -135,7 +139,7 @@
 			// Nicers
 			nicers: [
 
-				[/\b((?:19|20)\d\d)[\/|\-|.](0?[1-9]|1[012])[\/|\-|.](0?[1-9]|[12][0-9]|3[01])\b/ig, "$2/$3/$1"],
+				[/\b((?:19|20)\d\d)[\/\-.](0?[1-9]|1[012])[\/\-.](0?[1-9]|[12][0-9]|3[01])\b/ig, '$2/$3/$1'],
 
 				[/(w(\.|\/))/i, 'with'],
 
@@ -184,7 +188,7 @@
 			]
 		};
 
-		this.now = undefined;
+		//this.now = undefined;
 
 		// using one EventParser instance
 		if (!(this instanceof EventParser )) {
@@ -238,18 +242,18 @@
 
 				match = matches.filter(this.helpers.isUndefined);
 				this.patterns.numbers.ordinal.lastIndex = matches.index + 1;
-				formattedString = "";
-				if (match.length == 2) {
+				formattedString = '';
+				if (match.length === 2) {
 					// 10, 20, 30?
 					if (match[1].match(/tenth|twentieth|thirtieth/i)) {
 						switch (match[1]) {
-							case "tenth":
+							case 'tenth':
 								formattedString = '10th';
 								break;
-							case "twentieth":
+							case 'twentieth':
 								formattedString = '20th';
 								break;
-							case "thirtieth":
+							case 'thirtieth':
 								formattedString = '30th';
 								break;
 						}
@@ -257,13 +261,15 @@
 						formattedString =
 							this.helpers.getOrdinal(this.sets.number.ordinal.indexOf(match[1].toLowerCase()) + 1);
 					}
-				} else if (match.length == 3) {
+				} else if (match.length === 3) {
 					formattedString =
 						(this.sets.number.prefix.indexOf(match[1].toLowerCase()) + 2) +
 						this.helpers.getOrdinal(this.sets.number.ordinal.indexOf(match[2].toLowerCase()) + 1);
 				}
 
-				if (formattedString != '') source = source.replace(match[0], formattedString);
+				if (formattedString !== '') {
+					source = source.replace(match[0], formattedString);
+				}
 			}
 			return source;
 		},
@@ -273,7 +279,7 @@
 			var match, matches;
 
 			event.isRecurrent = false;
-			event.recurrenceText = "";
+			event.recurrenceText = '';
 
 			// get recurrencies
 			// todo: currently gets only one recurrence. That's pity.
@@ -287,10 +293,9 @@
 				event.parsedText = event.parsedText.replace(match[0], '');
 
 				event.parsedRecurrencies.push({
-						index: matches.index,
-						match: match[0]
-					}
-				);
+					'index': matches.index,
+					'match': match[0]
+				});
 
 			}
 
@@ -354,8 +359,6 @@
 						if (found = matches[1].match(this.patterns.numbers.numerical)) {
 							subjectIndex = 2;
 							hasNumber = parseInt(found[0]);
-						} else {
-
 						}
 						break;
 				}
@@ -370,11 +373,7 @@
 				self: hasSelf,
 				number: hasNumber,
 				subjectIndex: subjectIndex
-			}
-		},
-
-		parseRelSuffix: function (matches) {
-			//
+			};
 		},
 
 		parseDates: function (event) {
@@ -388,13 +387,12 @@
 				date = (parseInt(match[2]) <= 31 && parseInt(match[2]) >= 1) ? parseInt(match[2]) : null;
 				month = (parseInt(match[1]) <= 12 && parseInt(match[1]) >= 1) ? parseInt(match[1]) : null;
 
-				console.log(match);
 				// Suggest that 2-digits year is:
 				// < 70 : 2000-2069,
 				// >=70 : 1970-1999
 				year =
-					((match.length == 4) ?
-						(match[3].length == 4) ?
+					((match.length === 4) ?
+						(match[3].length === 4) ?
 							parseInt(match[3]) : (
 							parseInt(match[3]) < 70 ?
 							parseInt(match[3]) + 2000 :
@@ -408,19 +406,18 @@
 					formattedString = match[0];
 
 					event.parsedDates.push({
-							index: matches.index,
-							match: formattedString,
-							formattedDate: formattedString,
-							hasYear: this.helpers.isNumeric(year),
-							date: {
-								month: month,
-								date: date,
-								year: year
-							}
+						index: matches.index,
+						match: formattedString,
+						formattedDate: formattedString,
+						hasYear: this.helpers.isNumeric(year),
+						date: {
+							month: month,
+							date: date,
+							year: year
 						}
-					);
+					});
 
-					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+					if (this.settings.onDateParsed && typeof this.settings.onDateParsed === 'function') {
 						this.settings.onDateParsed(event.parsedDates);
 					}
 				}
@@ -434,7 +431,7 @@
 
 				date = (parseInt(match[2]) <= 31 && parseInt(match[2]) >= 1) ? parseInt(match[2]) : null;
 				month = (this.sets.month.indexOf(match[1]) >= 0) ? this.sets.month.indexOf(match[1]) + 1 : null;
-				year = ((match.length == 4) ? parseInt(match[3]) : null);
+				year = ((match.length === 4) ? parseInt(match[3]) : null);
 				formattedString = month + '/' + date + ((year) ? '/' + year : '');
 
 				this.patterns.dates.mdyStrings.lastIndex = matches.index + 1;
@@ -445,23 +442,20 @@
 				if (date && month && this.helpers.isValidDate(formattedString)) {
 
 					event.hasValidDate = true;
-
 					event.parsedText = event.parsedText.replace(match[0], formattedString);
-
 					event.parsedDates.push({
-							index: matches.index,
-							match: match[0],
-							formattedDate: formattedString,
-							hasYear: this.helpers.isNumeric(year),
-							date: {
-								month: month,
-								date: date,
-								year: year
-							}
+						index: matches.index,
+						match: match[0],
+						formattedDate: formattedString,
+						hasYear: this.helpers.isNumeric(year),
+						date: {
+							month: month,
+							date: date,
+							year: year
 						}
-					);
+					});
 
-					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+					if (this.settings.onDateParsed && typeof this.settings.onDateParsed === 'function') {
 						this.settings.onDateParsed(event.parsedDates);
 					}
 				}
@@ -472,14 +466,12 @@
 			while (matches = this.patterns.dates.dmyStrings.exec(event.parsedText)) {
 
 				event.isValidDate = true;
-
 				match = matches.filter(this.helpers.isUndefined);
-
 				this.patterns.dates.dmyStrings.lastIndex = matches.index + 1;
 
 				date = (parseInt(match[1]) <= 31 && parseInt(match[1]) >= 1) ? parseInt(match[1]) : null;
 				month = (this.sets.month.indexOf(match[2]) >= 0) ? this.sets.month.indexOf(match[2]) + 1 : null;
-				year = ((match.length == 4) ? parseInt(match[3]) : null);
+				year = ((match.length === 4) ? parseInt(match[3]) : null);
 
 				formattedString = month + '/' + date + ((year) ? '/' + year : '');
 
@@ -490,22 +482,20 @@
 					event.parsedText = event.parsedText.replace(match[0], formattedString);
 
 					event.parsedDates.push({
-							index: matches.index,
-							match: match[0],
-							formattedDate: formattedString,
-							hasYear: this.helpers.isNumeric(year),
-							date: {
-								month: month,
-								date: date,
-								year: year
-							}
+						index: matches.index,
+						match: match[0],
+						formattedDate: formattedString,
+						hasYear: this.helpers.isNumeric(year),
+						date: {
+							month: month,
+							date: date,
+							year: year
 						}
-					);
+					});
 
-					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+					if (this.settings.onDateParsed && typeof this.settings.onDateParsed === 'function') {
 						this.settings.onDateParsed(event.parsedDates);
 					}
-
 				}
 			}
 
@@ -527,30 +517,27 @@
 
 				match = matches.filter(this.helpers.isUndefined);
 				if (match.length >= 3) {
-
 					if (match[match.length - 1].toLowerCase() === 'am' || match[match.length - 1].toLowerCase() === 'pm') {
-
-						if (
-							parseInt(match[1]) > 12 ||
+						// might unecessary till regex updates
+						if (parseInt(match[1]) > 12 ||
 							parseInt(match[1]) < 0 ||
-							(match.length == 3 &&
+							(match.length === 3 &&
 							(parseInt(match[2]) > 59 ||
 							parseInt(match[2]) < 0))
 						) continue;
 
 						meridian = match[match.length - 1].toLowerCase();
-						hours = (meridian == 'am' && parseInt(match[1]) == 12) ? 0 :
-							(meridian == 'pm' && parseInt(match[1]) < 12) ? parseInt(match[1]) + 12 :
+						hours = (meridian === 'am' && parseInt(match[1]) === 12) ? 0 :
+							(meridian === 'pm' && parseInt(match[1]) < 12) ? parseInt(match[1]) + 12 :
 								parseInt(match[1]);
-						minutes = (match.length == 3) ? 0 : parseInt(match[2]);
+						minutes = (match.length === 3) ? 0 : parseInt(match[2]);
 					} else {
-						if (
-							parseInt(match[1]) > 23 ||
+						if (parseInt(match[1]) > 23 ||
 							parseInt(match[1]) < 0 ||
 							parseInt(match[2]) > 59 ||
 							parseInt(match[2]) < 0
 						) continue;
-						meridian = undefined;
+
 						hours = parseInt(match[1]);
 						minutes = parseInt(match[2]);
 					}
@@ -569,7 +556,7 @@
 						}
 					});
 
-					if (this.settings.onTimeParsed && typeof(this.settings.onTimeParsed) === "function") {
+					if (this.settings.onTimeParsed && typeof this.settings.onTimeParsed === 'function') {
 						this.settings.onTimeParsed(event.parsedTimes);
 					}
 				}
@@ -581,9 +568,7 @@
 		parseRelativeDates: function (event) {
 
 			var matches, match, targetDate, endDate, formattedString, relPrefix;
-
 			var now = this.getNow();
-
 
 			// Day after tomorrow (should be only one mention, ok?)
 			if (matches = event.parsedText.match(this.patterns.dates.relative.dayAfter)) {
@@ -610,14 +595,13 @@
 
 				match = matches.filter(this.helpers.isUndefined);
 
-				if (match.length == 2) {
+				if (match.length === 2) {
 					targetDate = this.helpers.getDateShifted(now, match[1], 1);
-				} else if (match.length == 3) {
+				} else if (match.length === 3) {
 					targetDate = this.helpers.getDateShifted(now, match[2], match[1]);
 				}
 
 				formattedString = targetDate.getMonth() + '/' + targetDate.getDate() + '/' + targetDate.getFullYear();
-
 				event.parsedText = event.parsedText.replace(matches[0], formattedString);
 
 				event.parsedDates.push({
@@ -631,7 +615,7 @@
 					}
 				});
 
-				if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+				if (this.settings.onDateParsed && typeof this.settings.onDateParsed === 'function') {
 					this.settings.onDateParsed(event.parsedDates);
 				}
 			}
@@ -640,7 +624,7 @@
 			// Convert common relative dates given
 			while (matches = this.patterns.dates.relative.common.exec(event.parsedText)) {
 
-				formattedString = undefined;
+				formattedString = '';
 				event.isValidDate = true;
 
 				match = matches.filter(this.helpers.isUndefined);
@@ -649,9 +633,7 @@
 				relPrefix = this.parseRelPrefix(match);
 				//relSuffix = this.parseRelSuffix(match);
 
-				//
 				// todo: if relative date relates to today, should check time. if it already passed, check next relative.
-
 				// todo: DONT USE DATE OBJECT. Dates can be uncomplete if year not specified.
 
 				if (this.sets.weekday.indexOf(match[relPrefix.subjectIndex]) >= 0) {
@@ -674,17 +656,10 @@
 							targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
 							break;
 						case 'day':
+							// same as tomorrow
+							// at next day
 							if (relPrefix.next) {
-								// same as tomorrow
-								// at next day
 								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-
-							} else if (relPrefix.last) {
-
-
-							} else if (relPrefix.number) {
-								// at Nth day
-
 							}
 							break;
 						case 'week':
@@ -756,7 +731,7 @@
 						});
 					}
 
-					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+					if (this.settings.onDateParsed && typeof this.settings.onDateParsed === 'function') {
 						this.settings.onDateParsed(event.parsedDates);
 					}
 
@@ -774,7 +749,7 @@
 
 			while (matches = this.patterns.dates.ranges.from.exec(event.parsedText)) {
 
-				if (event.parsedDates.length == 1) {
+				if (event.parsedDates.length === 1) {
 
 					match = matches.filter(this.helpers.isUndefined);
 
@@ -799,7 +774,7 @@
 							}
 						});
 
-						if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+						if (this.settings.onDateParsed && typeof this.settings.onDateParsed === 'function') {
 							this.settings.onDateParsed(event.parsedDates);
 						}
 
@@ -813,10 +788,8 @@
 
 			while (matches = this.patterns.dates.ranges.to.exec(event.parsedText)) {
 
-				if (event.parsedDates.length == 1) {
-
+				if (event.parsedDates.length === 1) {
 					match = matches.filter(this.helpers.isUndefined);
-
 
 					date = (parseInt(match[3]) <= 31 && parseInt(match[3]) >= 1) ? parseInt(match[3]) : null;
 					month = event.parsedDates[0].date.month;
@@ -839,25 +812,20 @@
 							year: year
 						}
 					});
-
-					if (this.settings.onDateParsed && typeof(this.settings.onDateParsed) === "function") {
+					if (this.settings.onDateParsed && typeof this.settings.onDateParsed === 'function') {
 						this.settings.onDateParsed(event.parsedDates);
 					}
-
 				} else {
 					// todo: sure this is bad behaviour, i shouldnt relate to stupid logic that there is just one dates were parsed. I should get related date by match index position
 					console.error('Cannot comeplete range. There is no dates detected or there more than 1 date in cache.')
 				}
-
-
 			}
-
 			return event;
 		},
 
 		parse: function (source) {
 
-			if (!source) throw "Nothng to parse";
+			if (!source) throw 'Nothng to parse';
 
 			// store preformatted sting to store date index positions
 
@@ -885,13 +853,10 @@
 
 			event = this.parseDateRanges(event);
 
-			//sort dates
 
 			//
 			// Finalize dates, make ajustements
 			// ================================
-
-			console.log(event.parsedDates);
 
 			event.parsedTitle = event.parsedText;
 			event.parsedTitle = event.parsedTitle.replace(this.patterns.dates.ranges.formatted, '');
@@ -920,12 +885,12 @@
 							);
 
 
-						if (event.parsedTimes.length == 2) {
+						if (event.parsedTimes.length === 2) {
 
 							// suggest time is sheduled on the next day when last hours are less that prevoious.
 							var suggestDayDelta = (parseFloat(event.parsedTimes[0].time.hours + '.' + event.parsedTimes[0].time.minutes) > parseFloat(event.parsedTimes[1].time.hours + '.' + event.parsedTimes[1].time.minutes)) ? 1 : 0;
 
-							if (event.parsedDates.length == 1) {
+							if (event.parsedDates.length === 1) {
 								event.endDate =
 									new Date(
 										(event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : now.getFullYear(),
@@ -934,7 +899,7 @@
 										event.parsedTimes[1].time.hours,
 										event.parsedTimes[1].time.minutes, 0, 0
 									);
-							} else if (event.parsedDates.length == 2) {
+							} else if (event.parsedDates.length === 2) {
 								event.endDate =
 									new Date(
 										(event.parsedDates[1].hasYear) ? event.parsedDates[1].date.year : (event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : now.getFullYear(),
@@ -955,7 +920,7 @@
 								0, 0, 0, 0
 							);
 
-						if (event.parsedDates.length == 2) {
+						if (event.parsedDates.length === 2) {
 							event.endDate =
 								new Date(
 									(event.parsedDates[1].hasYear) ? event.parsedDates[1].date.year : (event.parsedDates[0].hasYear) ? event.parsedDates[0].date.year : now.getFullYear(),
@@ -974,7 +939,7 @@
 
 					if (event.parsedTimes.length) {
 						// has times
-						if (event.parsedTimes.length == 1) {
+						if (event.parsedTimes.length === 1) {
 
 							event.allDay = false;
 
@@ -988,7 +953,7 @@
 									0, 0);
 
 
-						} else if (event.parsedTimes.length == 2) {
+						} else if (event.parsedTimes.length === 2) {
 
 							event.allDay = false;
 
@@ -1009,7 +974,6 @@
 									event.parsedTimes[1].time.hours,
 									event.parsedTimes[1].time.minutes,
 									0, 0);
-
 						}
 
 					} else {
@@ -1024,7 +988,7 @@
 				}
 			}
 
-			if (this.settings.onParsed && typeof(this.settings.onParsed) === "function") {
+			if (this.settings.onParsed && typeof this.settings.onParsed === 'function') {
 				this.settings.onParsed();
 			}
 
@@ -1045,27 +1009,30 @@
 		helpers: {
 
 			extend: function () {
-				for (var i = 1; i < arguments.length; i++)
-					for (var key in arguments[i])
-						if (arguments[i].hasOwnProperty(key))
+				for (var i = 1; i < arguments.length; i++) {
+					for (var key in arguments[i]) {
+						if (arguments[i].hasOwnProperty(key)) {
 							arguments[0][key] = arguments[i][key];
+						}
+					}
+				}
 				return arguments[0];
 			},
 
 			isUndefined: function (el) {
-				return el != undefined;
+				return el !== undefined;
 			},
 
 			padNumberWithZeroes: function (number, size) {
 				size = size || 2;
-				var result = number + "";
-				while (result.length < size) result = "0" + result;
+				var result = number + '';
+				while (result.length < size) result = '0' + result;
 				return result;
 			},
 
 			getOrdinal: function (number) {
 				number = parseInt(number);
-				var s = ["th", "st", "nd", "rd"],
+				var s = ['th', 'st', 'nd', 'rd'],
 					v = number % 100;
 				return number + (s[(v - 20) % 10] || s[v] || s[0]);
 			},
@@ -1076,12 +1043,11 @@
 					var parts, number;
 					//var matches = this.patterns.numbers.normal.exec(string);
 
-
 					parts = string.split(/\s|-/g);
 
 					if (parts.length = 2) {
 						number =
-							(re.prefix.indexOf(parts[0]) + 1) + "" +
+							(re.prefix.indexOf(parts[0]) + 1) + '' +
 							(re.normal.indexOf(parts[1]) + 1);
 					} else {
 						number =
@@ -1103,9 +1069,9 @@
 
 				amount = amount || 1;
 
-				if (typeof amount == 'string' && isNaN(amount)) {
+				if (typeof amount === 'string' && isNaN(amount)) {
 					switch (amount) {
-						case "couple":
+						case 'couple':
 							amount = 2;
 							break;
 						default:
@@ -1118,14 +1084,16 @@
 				}
 
 				switch (dateModifier) {
-					case "day":
+					case 'day':
 						return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + amount);
-					case "week":
+					case 'week':
 						return new Date(dt.getFullYear(), dt.getMonth(), dt.getDate() + (7 * amount));
-					case "month":
+					case 'month':
 						return new Date(dt.getFullYear(), dt.getMonth() + amount, dt.getDate());
-					case "year":
+					case 'year':
 						return new Date(dt.getFullYear() + amount, dt.getMonth(), dt.getDate());
+					default:
+						return false;
 				}
 
 			},
@@ -1137,7 +1105,7 @@
 				var targetDate;
 
 				targetMonth =
-					(typeof targetMonth == "string" && isNaN(parseInt(targetMonth))) ?
+					(typeof targetMonth === 'string' && isNaN(parseInt(targetMonth))) ?
 						this.sets.month.indexOf(targetMonth.toLowerCase()) :
 						parseInt(targetMonth);
 
@@ -1145,10 +1113,10 @@
 					new Date().setFullYear(dt.getFullYear() + 1, targetMonth, 1) :
 					new Date().setFullYear(dt.getFullYear(), targetMonth, 1);
 
-				if (targetMonth == currentMonth && relativeStates.self)
+				if (targetMonth === currentMonth && relativeStates.self)
 					targetDate = new Date().setFullYear(dt.getFullYear(), targetMonth, 1);
 
-				if (targetMonth == currentMonth && relativeStates.next)
+				if (targetMonth === currentMonth && relativeStates.next)
 					targetDate = new Date().setFullYear(dt.getFullYear() + 1, targetMonth, 1);
 
 				return targetDate;
@@ -1160,14 +1128,14 @@
 				var currentWeekday = dt.getDay();
 
 				targetWeekday =
-					(typeof targetWeekday == "string" && isNaN(parseInt(targetWeekday))) ?
+					(typeof targetWeekday === 'string' && isNaN(parseInt(targetWeekday))) ?
 						this.sets.weekday.indexOf(targetWeekday.toLowerCase()) :
 						parseInt(targetWeekday);
 
 				var daysUntilNext = targetWeekday - currentWeekday + ((currentWeekday <= targetWeekday) ? 0 : 7);
 
-				if (relativeStates.next && currentWeekday == targetWeekday) daysUntilNext += 7;
-				if (relativeStates.self && currentWeekday == targetWeekday) daysUntilNext = 0;
+				if (relativeStates.next && currentWeekday === targetWeekday) daysUntilNext += 7;
+				if (relativeStates.self && currentWeekday === targetWeekday) daysUntilNext = 0;
 
 				if (relativeStates.number) {
 					// parse suffix (1st monday, 11th saturday) as well
@@ -1190,7 +1158,7 @@
 				if ((!(y % 4) && y % 100) || !(y % 400)) {
 					daysInMonth[1] = 29;
 				}
-				return d <= daysInMonth[--m]
+				return d <= daysInMonth[--m];
 			},
 
 			isDateObject: function (date) {
