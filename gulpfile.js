@@ -1,3 +1,4 @@
+"use strict";
 var gulp = require('gulp');
 var concat = require('gulp-concat');
 var uglify = require('gulp-uglify');
@@ -5,7 +6,7 @@ var notify = require('gulp-notify');
 var eslint = require('gulp-eslint');
 var karma = require('karma').Server;
 
-gulp.task('js', ['lint'], function () {
+gulp.task('js', function () {
 	return gulp.src('src/*.js')
 		.pipe(concat('event-parser.min.js'))
 		.pipe(uglify())
