@@ -129,7 +129,7 @@
 
 			times: {
 				formatted: /((?:(?:at|on)\s)?\b(?:(?:[01]?[0-9]|2[0-3])(?::)([0-5][0-9]))\b)/gi,
-				singleInstances: /(?:(?:at|on)?\b((1[012]|0?[1-9])(?:(?::)([0-5][0-9]))(?:(?:\s)?(am|pm))|(1[012]|0?[1-9])(?:\s)?(am|pm)|([01]?[0-9]|2[0-3])(?::)([0-5][0-9]))\b)/gi,
+				singleInstances: /(?:(?:at|on)?\b(?:(1[012]|0?[1-9])(?:(?::)([0-5][0-9]))(?:(?:\s)?(am|pm))|(1[012]|0?[1-9])(?:\s)?(am|pm)|([01]?[0-9]|2[0-3])(?::)([0-5][0-9]))\b)/gi,
 
 				fullRanges: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?::)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?::)(\\d{2}))', 'gi'),
 				partialX2Time: new RegExp('((?:' + this.sets.range.prefix.join('|') + '\\s)?(?:\\d{1,2})(?::)(\\d{2}))\\s?(?:' + this.sets.range.splitter.join('|') + ')\\s?((\\d{1,2})(?:\\:)(\\d{2}))', 'gi'),
@@ -513,9 +513,11 @@
 			while (matches = this.patterns.times.singleInstances.exec(event.parsedText)) {
 				//if (this.patterns.dates.singleInstances.lastIndex) console.log(this.patterns.dates.singleInstances.lastIndex);
 
+
 				event.isValidDate = true;
 
 				match = matches.filter(this.helpers.isUndefined);
+				console.log(match);
 				if (match.length >= 3) {
 					if (match[match.length - 1].toLowerCase() === 'am' || match[match.length - 1].toLowerCase() === 'pm') {
 						// might unecessary till regex updates
