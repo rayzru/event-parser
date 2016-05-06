@@ -499,6 +499,7 @@
 				}
 			}
 
+			// before sort we shold normalize year if it not specified
 			// sort parsed dates in incremental order.
 			event.parsedDates.sort(function (a, b) {
 				return (a.dt < b.dt) ? -1 : (a.dt > b.dt) ? 1 : 0;
@@ -517,7 +518,6 @@
 				event.isValidDate = true;
 
 				match = matches.filter(this.helpers.isUndefined);
-				console.log(match);
 				if (match.length >= 3) {
 					if (match[match.length - 1].toLowerCase() === 'am' || match[match.length - 1].toLowerCase() === 'pm') {
 						// might unecessary till regex updates
