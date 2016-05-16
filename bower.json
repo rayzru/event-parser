@@ -1,6 +1,6 @@
 {
 	"name": "event-parser.js",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"description": "Natural-language event parser for Javascript.",
 	"main": "src/event-parser.js",
 	"authors": [
