@@ -152,7 +152,7 @@
 
 				//aliases
 				[/(?:\b)(noon)(?:\b)/i, '12:00'],
-				[/\b(midnight)\b/i, '24:00'], // depends on needs?
+				[/(?:\b)(midnight)(?:\b)/i, '00:00'], // depends on needs?
 
 				// weekdays
 				[/(\bmon(?:day)?\b)/i, 'monday'],
@@ -949,11 +949,10 @@
 								new Date(
 									now.getFullYear(),
 									now.getMonth(),
-									now.getDate(),
+									now.getDate() + ((now.getHours() >= event.parsedTimes[0].time.hours && now.getMinutes() > event.parsedTimes[0].time.minutes) ? 1 : 0),
 									event.parsedTimes[0].time.hours,
 									event.parsedTimes[0].time.minutes,
 									0, 0);
-
 
 						} else if (event.parsedTimes.length === 2) {
 
