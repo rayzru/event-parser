@@ -112,7 +112,7 @@
 				// relative closest dates aliases
 				// on friday, on other friday, at monday, at next monday, tomorrow, today, at 2nd tuesday
 				relative: {
-					common: /(?:(?:on|at|to)\s)?(?:(next|this|last|after|other|\d(?:st|nd|rd|th)?)\s)?(today|tomorrow|month|week|year|sunday|monday|tuesday|wednesday|thursday|friday|saturday)/ig,
+					common: /(?:(?:on|at|to)\s)?(?:(next|this|last|after|other|\d(?:st|nd|rd|th)?)\s)?(month|week|year|sunday|monday|tuesday|wednesday|thursday|friday|saturday)|(?:(?:on|at)\s)?(today|tomorrow)/ig,
 					dayAfter: /(\bday\safter\stomorrow\b)/ig,
 					in: /(?:in\b\s(?:a\s)?(couple|(?:\d+)|(?:\b(?:twenty|thirty(?:-|\s))?\b(?:one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen))|(?:twenty|thirty))?(?:\s)?(?:of\s)?(day|week|month|year)(?:s)?)/ig
 				},
@@ -667,6 +667,7 @@
 						case 'week':
 							if (relPrefix.next) {
 								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 8 - now.getDay(), 0, 0, 0);
+								endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (8 + 7 - now.getDay()), 0, 0, 0);
 							} else if (relPrefix.self) {
 								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
 								endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (7 - now.getDay()), 0, 0, 0);
@@ -675,26 +676,21 @@
 						case 'month':
 							if (relPrefix.next) {
 								targetDate = new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0);
-								//formattedString = '1st of ' + this.sets.month[now.getMonth() + 1];
-								// event.parsedText = event.parsedText.replace(match[0], formattedString);
-								//event = this.parseDates(event);
-
-								//start parse from beginning
+								endDate = new Date(now.getFullYear(), now.getMonth() + 2, 0, 0, 0, 0);
 								this.patterns.dates.relative.common.lastIndex = 0;
 							} else if (relPrefix.self) {
 								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
 								endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 0, 0, 0);
-								//formattedString = this.sets.month[now.getMonth()];
-								//event.parsedText = event.parsedText.replace(match[0], formattedString);
-								//event = this.parseDates(event);
-
-								//start parse from beginning
 								this.patterns.dates.relative.common.lastIndex = 0;
 							}
 							break;
 						case 'year':
 							if (relPrefix.next) {
-								targetDate = new Date(now.getFullYear() + 1, now.getMonth() + 1, now.getDate(), 0, 0, 0);
+								targetDate = new Date(now.getFullYear() + 1, 1, 0, 0, 0, 0);
+								endDate = new Date(now.getFullYear() + 2, 0, 0, 0, 0, 0);
+							} else if (relPrefix.self) {
+								targetDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+								endDate = new Date(now.getFullYear() + 1, 0, 0, 0, 0, 0);
 							}
 							break;
 						default:
