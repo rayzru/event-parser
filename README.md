@@ -42,9 +42,12 @@ var event = "Have fun with Jane at home on 11th dec".parseEvent({
 ````
 
 ##Install
-Use Bower to install library:
-```sh
+Use Bower or NPM to install :
+```sh=Bower
 bower install event-parser.js
+```
+```sh=NPM
+npm install event-parser.js
 ```
 
 ##Todo
