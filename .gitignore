@@ -1,4 +1,12 @@
-.idea
-scripts
 node_modules
-bower_components
+coverage
+.nyc_output
+.DS_Store
+*.log
+.vscode
+.idea
+dist
+compiled
+.awcache
+.rpt2_cache
+docs

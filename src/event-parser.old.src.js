@@ -11,7 +11,7 @@
 	'use strict';
 
 	// constructor
-	function EventParser(config) {
+  function EventParser(config) {
 
 		// Default configuration
 		var defaults = {
