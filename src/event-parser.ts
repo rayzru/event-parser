@@ -1,27 +1,21 @@
-export enum WeekStart {
-  sunday = 0,
-  monday = 1
-}
-
-export interface IConfig {
-  source: string,
-  weekStart?: WeekStart,
-  onDateParsed?: () => void,
-  onTimeParsed?: () => void,
-  onParsed?: () => void,
-}
+import { IConfig, Normalizers } from './def'
+import Normalizer from './normalizer'
 
 const defaults: IConfig = {
   source: '',
-  weekStart: 0,
+  weekStart: 0
 }
 
 export default class EventParser {
-  private settings: IConfig = defaults;
+  private settings: IConfig = defaults
+
   constructor(config?: IConfig) {
-    Object.assign(this.settings, config);
+    Object.assign(this.settings, config)
   }
 
-  
-
+  private init() {
+    const normalized = new Normalizer()
+      .add(Normalizers)
+      .normalize(this.settings.source)
+  }
 }
