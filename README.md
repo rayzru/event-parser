@@ -1,37 +1,26 @@
-Event Parser
+Event Parser.js
 ========
 
-Рarses events written in plain English, and returns an object defining a basic event.
+Tiny, depency-free library developed to process English sentences describing Events into plain understandable objects. 
 
 ##Features
-* detects various dates
-* detects relative dates
-* support multiple formats
-* detects recurrency
-* suggests event title, places and involved names at given subject
+* Determinating dates and times
+* Detects time ranges, relative dates
+* Support multiple time and date formats, various date-related abbreviations
+* Detects recurrent dates
+* Suggests event title, places and person names at given subject
+* TypeScript-ed!
 
-
-##Achtung
-Library is in development. All features not implemented yet. Feel free to submit bugs, unit tests, and suggest improvements as well.
+##Achtung!
+Library is in development. Feel free to submit bugs and suggest any ideas.
 
 ##Usage
 
 ```javascript
-var event = "Have fun with Jane at home on 11th dec".parseEvent({
-
-	// callback called after parse is done;
-	onParsed: function() {},
-
-   	// callback called after each instance of date is parsed;
-    onDateParsed: function (parsedDateArray) {},
-
-   	// callback called after each instance of time is parsed;
-    onTimeParsed: function (parsedTimeArray) {}
-});
-
+var event = "Push into master every day at 6pm".parseEvent();
 ```
 
-```javascript
+```json
 {
 	title: "Have fun with Jane at home at 12 dec 2020",
 	startDate: "‌Sun Dec 12 2020 00:00:00 GMT+0300",
@@ -51,12 +40,9 @@ npm install event-parser.js
 ```
 
 ##Todo
-* Support RRULE
-
-##Inspired by
-
-* [Sherlock -- javascript NLP event date parser library](https://github.com/neilgupta/Sherlock/)
-* [Event Parser -- Perl NLP recurrent event date parser library](https://github.com/kvh/recurrent/blob/master/src/recurrent/event_parser.py)
+* Move to TypeScript, use new ES6 ASAP
+* Completely rewrite old chaotic codebase into acceptable step-by-step simple and smart architecture.
+* Generate RRULE
 
 ## Author
 - Email: info@rayz.ru
@@ -64,5 +50,5 @@ npm install event-parser.js
 
 ## Copyright and license
 
-Code and documentation copyright 2011-2016 by Andrew Rumm.
+Code and documentation copyright 2011-2018 by Andrew Rumm.
 Code released under [the MIT license](https://github.com/rayzru/event-parser/blob/master/LICENSE).

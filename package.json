@@ -1,8 +1,8 @@
 {
-  "name": "event-parser",
-  "version": "2.0.0",
+  "name": "event-parser.js",
+  "version": "0.2.0",
   "description": "",
-  "keywords": [],
+  "keywords": ["event-parsing", "nlp", "text-parse", "javsctipt", "typescr"],
   "main": "dist/event-parser.umd.js",
   "module": "dist/event-parser.es5.js",
   "typings": "dist/types/event-parser.d.ts",
@@ -103,8 +103,5 @@
     "typedoc": "^0.11.0",
     "typescript": "^2.6.2",
     "validate-commit-msg": "^2.12.2"
-  },
-  "dependencies": {
-    "npm": "^5.8.0"
   }
 }

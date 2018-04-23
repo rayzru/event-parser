@@ -13,7 +13,7 @@ export default class Normalizer {
   public normalize(source: string): string {
     return this.filter.reduce(
       (result: string, n: NormalizerElement) =>
-        result.replace(n.regexp, n.value),
+        result.replace( (n.regexp instanceof RegExp) ? new RegExp(n.regexp, 'gi') : n.regexp, n.value),
       source
     )
   }
