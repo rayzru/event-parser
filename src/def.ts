@@ -1,4 +1,4 @@
-import { NormalizerType } from './normalizer';
+import { NormalizerType } from './normalizer'
 
 export interface IConfig {
   source: string
@@ -36,8 +36,17 @@ export enum Month {
   december
 }
 
-export const Normalizers: NormalizerType[] = [
+export enum Units {
+  second,
+  minute,
+  hour,
+  day,
+  week,
+  month,
+  year
+}
 
+export const Normalizers: NormalizerType[] = [
   [/[^0-9a-z]\s?@\s?/, ' at '],
 
   [/w(\.|\/)/, 'with'],
@@ -70,6 +79,12 @@ export const Normalizers: NormalizerType[] = [
   [/\boct(ober)?\b/, 'october'],
   [/\bnov(ember)?\b/, 'november'],
   [/\bdec(ember)?\b/, 'december'],
+
+  // units
+  [/sec(ond)?s?/, 'second'],
+  [/min(ute)?s?/, 'minute'],
+  [/h(our|r)s?/, 'minute'],
+  [/y(ear|r)s?/, 'minute'],
 
   [/\bthanksgiving\b/, 'every 4th thuesday of november'], // USA, but not Canada
   [/\bchristmas|xmas|x-mas\b/, '12/25'], // USA?
